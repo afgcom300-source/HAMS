@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import pdfplumber
@@ -153,6 +153,7 @@ class Notification(db.Model):
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
             'expires_at': self.expires_at.strftime('%Y-%m-%d %H:%M:%S') if self.expires_at else None
         }
+
 class UserNotification(db.Model):
     __tablename__ = 'user_notifications'
     
@@ -163,6 +164,9 @@ class UserNotification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # relationship so code can use user_notif.notification
+    notification = db.relationship('Notification', backref=db.backref('user_notifications', lazy=True))
 
 class Report(db.Model):
     __tablename__ = 'reports'
@@ -511,7 +515,7 @@ def login():
                 
         elif role == 'seller':
             seller = Seller.query.filter_by(phone=phone).first()
-            if seller and check_password_hash(seller.password_hash, password):
+            if seller and seller.check_password(password):
                 session['user_id'] = seller.id
                 session['user_type'] = 'seller'
                 session['user_name'] = seller.name
@@ -549,15 +553,21 @@ def register_seller():
         email = request.form.get('email')
         password = request.form.get('password')
 
-        seller = Seller(name=name, phone=phone,email=email, password_hash=password)
+        # استفاده از متد set_password برای هش کردن رمز
+        seller = Seller(name=name, phone=phone, email=email)
+        seller.set_password(password)
         db.session.add(seller)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash('خطا در ثبت فروشنده: ' + str(e), 'danger')
+            return redirect(url_for('register_seller'))
 
         flash('فروشنده با موفقیت ثبت شد')
         return redirect(url_for('login'))
 
     return render_template('seller_register.html')
-
 
 
 
@@ -621,36 +631,56 @@ def get_seller_accounts():
 
 @app.route('/api/sales', methods=['POST'])
 def register_sale():
-    data = request.get_json()
-    
-    # ایجاد تراکنش
-    transaction = Transaction(
-        seller_id=data.get('seller_id', 1),  # باید از session بگیرید
-        account_id=data.get('account_id'),
-        amount=data.get('amount'),
-        commission=int(data.get('amount') * 0.1)  # 10% کمیسیون
-    )
-    
-    db.session.add(transaction)
-    
-    # ایجاد رکورد کمیسیون
-    commission = Commission(
-        seller_id=data.get('seller_id', 1),
-        transaction_id=transaction.id,
-        amount=transaction.commission,
-        status='pending'
-    )
-    
-    db.session.add(commission)
-    
-    # به‌روزرسانی وضعیت اکانت
-    account = Account.query.get(data.get('account_id'))
-    if account:
-        account.status = 'sold'
-        account.seller_id = data.get('seller_id', 1)
-    
-    db.session.commit()
-    
+    data = request.get_json() or {}
+    # اعتبارسنجی ساده ورودی
+    try:
+        seller_id = int(data.get('seller_id', 1))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'seller_id نامعتبر است'}), 400
+
+    try:
+        account_id = int(data.get('account_id'))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'account_id نامعتبر است'}), 400
+
+    try:
+        amount = float(data.get('amount'))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'amount نامعتبر است'}), 400
+
+    commission_amount = int(amount * 0.1)  # 10% کمیسیون
+
+    try:
+        transaction = Transaction(
+            seller_id=seller_id,
+            account_id=account_id,
+            amount=int(amount),
+            commission=commission_amount,
+            status='completed'
+        )
+        db.session.add(transaction)
+        # flush so transaction.id is assigned
+        db.session.flush()
+
+        commission = Commission(
+            seller_id=seller_id,
+            transaction_id=transaction.id,
+            amount=commission_amount,
+            status='pending'
+        )
+        db.session.add(commission)
+
+        # به‌روزرسانی وضعیت اکانت
+        account = Account.query.get(account_id)
+        if account:
+            account.status = 'sold'
+            account.seller_id = seller_id
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'خطا در ثبت فروش: ' + str(e)}), 500
+
     return jsonify({'success': True, 'message': 'فروش با موفقیت ثبت شد'})
 
 @app.route('/api/seller/sales')
@@ -675,11 +705,17 @@ def get_seller_sales():
 
 @app.route('/api/withdrawals', methods=['POST'])
 def request_withdrawal():
-    data = request.get_json()
+    data = request.get_json() or {}
     
+    try:
+        seller_id = int(data.get('seller_id', 1))
+        amount = int(data.get('amount'))
+    except (TypeError, ValueError):
+        return jsonify({'success': False, 'message': 'ورودی نامعتبر'}), 400
+
     withdrawal = Withdrawal(
-        seller_id=data.get('seller_id', 1),
-        amount=data.get('amount'),
+        seller_id=seller_id,
+        amount=amount,
         bank_account=data.get('bank_account'),
         status='pending'
     )
@@ -701,8 +737,11 @@ def get_seller_stats():
     commissions = Commission.query.filter_by(seller_id=seller_id, status='pending').all()
     commission_balance = sum(c.amount for c in commissions)
     
+    # محاسبه فروش امروز - از ابتدا تا انتهای روز
+    today = datetime.utcnow().date()
+    start_of_today = datetime.combine(today, datetime.min.time())
     today_sales = Transaction.query.filter_by(seller_id=seller_id)\
-        .filter(Transaction.created_at >= datetime.today().date()).count()
+        .filter(Transaction.created_at >= start_of_today).count()
     
     return jsonify({
         'total_accounts': total_accounts,
@@ -789,68 +828,76 @@ def admin_notifications():
 
 @app.route('/api/admin/notifications', methods=['POST'])
 def send_notification():
-    data = request.get_json()
+    data = request.get_json() or {}
     
-    notification = Notification(
-        title=data.get('title'),
-        message=data.get('message'),
-        type=data.get('type', 'info'),
-        target_type=data.get('target_type', 'all'),
-        target_id=data.get('target_id'),
-        expires_at=datetime.strptime(data.get('expires_at'), '%Y-%m-%d') if data.get('expires_at') else None
-    )
-    
-    db.session.add(notification)
-    db.session.commit()
-
-    if data.get('target_type') == 'sellers':
-        sellers = Seller.query.all()
-        for seller in sellers:
-            user_notif = UserNotification(
-                user_id=seller.id,
-                user_type='seller',
-                notification_id=notification.id
-            )
-            db.session.add(user_notif)
-    elif data.get('target_type') == 'customers':
-        customers = Customer.query.all()
-        for customer in customers:
-            user_notif = UserNotification(
-                user_id=customer.id,
-                user_type='customer',
-                notification_id=notification.id
-            )
-            db.session.add(user_notif)
-    elif data.get('target_type') == 'specific':
-        # برای کاربر خاص
-        user_notif = UserNotification(
-            user_id=data.get('target_id'),
-            user_type=data.get('user_type'),
-            notification_id=notification.id
+    try:
+        notification = Notification(
+            title=data.get('title'),
+            message=data.get('message'),
+            type=data.get('type', 'info'),
+            target_type=data.get('target_type', 'all'),
+            target_id=data.get('target_id'),
+            expires_at=datetime.strptime(data.get('expires_at'), '%Y-%m-%d') if data.get('expires_at') else None
         )
-        db.session.add(user_notif)
-    else:
-        # برای همه کاربران
-        sellers = Seller.query.all()
-        customers = Customer.query.all()
-        
-        for seller in sellers:
+        db.session.add(notification)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'خطا در ایجاد اعلان: ' + str(e)}), 500
+
+    # ایجاد UserNotificationها
+    try:
+        if data.get('target_type') == 'sellers':
+            sellers = Seller.query.all()
+            for seller in sellers:
+                user_notif = UserNotification(
+                    user_id=seller.id,
+                    user_type='seller',
+                    notification_id=notification.id
+                )
+                db.session.add(user_notif)
+        elif data.get('target_type') == 'customers':
+            customers = Customer.query.all()
+            for customer in customers:
+                user_notif = UserNotification(
+                    user_id=customer.id,
+                    user_type='customer',
+                    notification_id=notification.id
+                )
+                db.session.add(user_notif)
+        elif data.get('target_type') == 'specific':
+            # برای کاربر خاص
             user_notif = UserNotification(
-                user_id=seller.id,
-                user_type='seller',
+                user_id=data.get('target_id'),
+                user_type=data.get('user_type'),
                 notification_id=notification.id
             )
             db.session.add(user_notif)
+        else:
+            # برای همه کاربران
+            sellers = Seller.query.all()
+            customers = Customer.query.all()
             
-        for customer in customers:
-            user_notif = UserNotification(
-                user_id=customer.id,
-                user_type='customer',
-                notification_id=notification.id
-            )
-            db.session.add(user_notif)
-    
-    db.session.commit()
+            for seller in sellers:
+                user_notif = UserNotification(
+                    user_id=seller.id,
+                    user_type='seller',
+                    notification_id=notification.id
+                )
+                db.session.add(user_notif)
+                
+            for customer in customers:
+                user_notif = UserNotification(
+                    user_id=customer.id,
+                    user_type='customer',
+                    notification_id=notification.id
+                )
+                db.session.add(user_notif)
+        
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'خطا در ایجاد user notifications: ' + str(e)}), 500
     
     return jsonify({'success': True, 'message': 'اعلان با موفقیت ارسال شد'})
 
@@ -899,9 +946,13 @@ def get_customer_notifications():
 
 @app.route('/api/notifications/<int:notif_id>/read', methods=['POST'])
 def mark_notification_as_read(notif_id):
-    user_id = request.json.get('user_id')
-    user_type = request.json.get('user_type')
+    data = request.get_json() or {}
+    user_id = data.get('user_id')
+    user_type = data.get('user_type')
     
+    if not user_id or not user_type:
+        return jsonify({'success': False, 'message': 'user_id و user_type لازم است'}), 400
+
     user_notif = UserNotification.query.filter_by(
         user_id=user_id,
         user_type=user_type,
