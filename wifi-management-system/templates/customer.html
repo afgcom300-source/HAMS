@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customer.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="customer-container">
+    <!-- Header -->
+    <header class="customer-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <h3 id="customer-name">نام مشتری</h3>
+                        <p id="account-info">اکانت وای‌فای</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="logout()">خروج</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="customer-main">
+        <div class="container">
+            <!-- Account Status Cards -->
+            <div class="status-cards">
+                <div class="status-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-content">
+                        <h3>حجم باقی‌مانده</h3>
+                        <p class="value" id="remaining-data">۱۵ گیگابایت</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="data-progress" style="width: 75%"></div>
+                        </div>
+                        <p class="progress-text">۷۵٪ مصرف شده</p>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-icon">⏰</div>
+                    <div class="card-content">
+                        <h3>زمان باقی‌مانده</h3>
+                        <p class="value" id="remaining-time">۱۲ روز</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="time-progress" style="width: 40%"></div>
+                        </div>
+                        <p class="progress-text">۴۰٪ گذشته</p>
+                    </div>
+                </div>
+
+                <div class="status-card">
+                    <div class="card-icon">💰</div>
+                    <div class="card-content">
+                        <h3>مبلغ پرداختی</h3>
+                        <p class="value" id="paid-amount">۵۰,۰۰۰ افغانی</p>
+                        <p class="subtitle">پرداخت شده</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Charts Section -->
+            <section class="usage-section">
+                <div class="section-header">
+                    <h2>آمار مصرف</h2>
+                    <div class="time-filter">
+                        <select id="time-range" onchange="filterUsageData()">
+                            <option value="day">۲۴ ساعت گذشته</option>
+                            <option value="week" selected>۷ روز گذشته</option>
+                            <option value="month">۳۰ روز گذشته</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>مصرف روزانه</h3>
+                        <canvas id="dailyUsageChart"></canvas>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>مصرف بر اساس ساعت</h3>
+                        <canvas id="hourlyUsageChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Section -->
+            <section class="alerts-section">
+                <div class="section-header">
+                    <h2>هشدارها و اعلانات</h2>
+                </div>
+
+                <div class="alerts-list" id="alerts-list">
+                    <!-- اعلان‌ها به صورت داینامیک -->
+                </div>
+            </section>
+
+            <!-- Account Details Section -->
+            <section class="details-section">
+                <div class="section-header">
+                    <h2>اطلاعات اکانت</h2>
+                </div>
+
+                <div class="account-details">
+                    <div class="detail-item">
+                        <label>نام کاربری:</label>
+                        <span id="username">user001</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>رمز عبور:</label>
+                        <span id="password">••••••••</span>
+                        <button class="btn-show-password" onclick="togglePassword()">نمایش</button>
+                    </div>
+                    <div class="detail-item">
+                        <label>نوع اکانت:</label>
+                        <span id="account-type">Wfi</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>تاریخ شروع:</label>
+                        <span id="start-date">1403/01/01</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>تاریخ انقضا:</label>
+                        <span id="expire-date">1403/02/01</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>فروشنده:</label>
+                        <span id="seller-name">علی محمدی</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- در بخش sidebar-nav اضافه کنید -->
+<nav class="sidebar-nav">
+    <ul>
+        <li><a href="/customer" class="active">داشبورد</a></li>
+        <li><a href="/customer/loyalty">سیستم وفاداری</a></li>
+        <li><a href="/customer/support">پشتیبانی</a></li>
+        <li><a href="/">خروج</a></li>
+    </ul>
+</nav>
+
+<script src="{{ url_for('static', filename='js/customer.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

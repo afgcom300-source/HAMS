@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .ai-container {
+        padding: 2rem;
+    }
+    
+    .ai-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .training-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .training-section h3 {
+        margin-bottom: 1rem;
+        color: var(--admin-dark);
+    }
+    
+    .models-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .model-card {
+        background: var(--admin-light);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border: 2px solid var(--admin-border);
+    }
+    
+    .model-card.active {
+        border-color: var(--admin-primary);
+    }
+    
+    .model-card h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .model-card p {
+        margin: 0 0 0.5rem 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .accuracy-bar {
+        width: 100%;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .accuracy-fill {
+        height: 100%;
+        background: var(--admin-primary);
+        border-radius: 4px;
+    }
+    
+    .model-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-train {
+        background: var(--admin-primary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.3s ease;
+    }
+    
+    .btn-train:hover {
+        background: var(--admin-secondary);
+    }
+    
+    .btn-train:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+    
+    .predictions-table {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .admin-table th {
+        background: var(--admin-primary);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .confidence-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .confidence-high { background: #10b981; color: white; }
+    .confidence-medium { background: #f59e0b; color: white; }
+    .confidence-low { background: #ef4444; color: white; }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--admin-primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-action {
+        background: var(--admin-primary);
+        color: white;
+    }
+    
+    .btn-secondary-action {
+        background: var(--admin-secondary);
+        color: white;
+    }
+    
+    .btn-action:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    
+    .btn-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports">گزارش‌ها</a></li>
+                <li><a href="/admin/loyalty">وفاداری</a></li>
+                <li><a href="/admin/payments">پرداخت‌ها</a></li>
+                <li><a href="/admin/ai" class="active">هوش مصنوعی</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="ai-container">
+            <div class="section-header">
+                <h2>مدیریت هوش مصنوعی</h2>
+            </div>
+            
+            <!-- دکمه‌های عملیاتی -->
+            <div class="action-buttons">
+                <button class="btn-action btn-primary-action" onclick="trainAllModels()" id="train-all-btn">
+                    🏃 آموزش گروهی مدل‌ها
+                </button>
+                <button class="btn-action btn-secondary-action" onclick="generateAllPredictions()" id="predict-all-btn">
+                    🔮 تولید پیش‌بینی‌های گروهی
+                </button>
+            </div>
+            
+            <!-- آمار هوش مصنوعی -->
+            <div class="ai-stats">
+                <div class="stat-card">
+                    <div class="stat-label">تعداد مدل‌ها</div>
+                    <div class="stat-number" id="total-models">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">مدل‌های فعال</div>
+                    <div class="stat-number" id="active-models">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">پیش‌بینی‌ها</div>
+                    <div class="stat-number" id="total-predictions">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">دقت میانگین</div>
+                    <div class="stat-number" id="avg-accuracy">0%</div>
+                    <div class="stat-label">درصد</div>
+                </div>
+            </div>
+            
+            <!-- بارگذاری -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p id="loading-message">در حال پردازش...</p>
+            </div>
+            
+            <!-- مدیریت مدل‌ها -->
+            <div class="training-section">
+                <div class="section-header">
+                    <h3>مدل‌های یادگیری ماشین</h3>
+                </div>
+                
+                <div class="models-grid" id="models-grid">
+                    <!-- مدل‌ها به صورت داینامیک -->
+                </div>
+            </div>
+            
+            <!-- لیست پیش‌بینی‌ها -->
+            <div class="predictions-table">
+                <div class="section-header">
+                    <h3>آخرین پیش‌بینی‌ها</h3>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ردیف</th>
+                            <th>مشتری</th>
+                            <th>مصرف پیش‌بینی شده</th>
+                            <th>دقت</th>
+                            <th>تاریخ پیش‌بینی</th>
+                            <th>تاریخ ایجاد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="predictions-table-body">
+                        <!-- داده‌ها به صورت داینامیک -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% endblock %}

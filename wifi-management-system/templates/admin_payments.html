@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .payments-container {
+        padding: 2rem;
+    }
+    
+    .payment-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .gateways-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .gateways-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .gateway-card {
+        background: var(--admin-light);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border: 2px solid var(--admin-border);
+    }
+    
+    .gateway-card.active {
+        border-color: var(--admin-primary);
+    }
+    
+    .gateway-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .gateway-card p {
+        margin: 0 0 1rem 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .gateway-actions button {
+        margin: 0 0.25rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    
+    .btn-edit {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .payments-table {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .admin-table th {
+        background: var(--admin-primary);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-success { background: #10b981; color: white; }
+    .status-failed { background: #ef4444; color: white; }
+    .status-pending { background: #f59e0b; color: white; }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .recharge-requests {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports">گزارش‌ها</a></li>
+                <li><a href="/admin/loyalty">وفاداری</a></li>
+                <li><a href="/admin/payments" class="active">پرداخت‌ها</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="payments-container">
+            <div class="section-header">
+                <h2>مدیریت پرداخت‌ها</h2>
+            </div>
+            
+            <!-- آمار پرداخت‌ها -->
+            <div class="payment-stats">
+                <div class="stat-card">
+                    <div class="stat-label">مجموع پرداخت‌ها</div>
+                    <div class="stat-number" id="total-payments">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">پرداخت‌های موفق</div>
+                    <div class="stat-number" id="successful-payments">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">درآمد کل</div>
+                    <div class="stat-number" id="total-revenue">0</div>
+                    <div class="stat-label">ریال</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">پرداخت‌های امروز</div>
+                    <div class="stat-number" id="today-payments">0</div>
+                    <div class="stat-label">عدد</div>
+                </div>
+            </div>
+            
+            <!-- مدیریت درگاه‌ها -->
+            <div class="gateways-section">
+                <div class="section-header">
+                    <h3>درگاه‌های پرداخت</h3>
+                    <button class="btn-primary" onclick="showAddGatewayModal()">افزودن درگاه جدید</button>
+                </div>
+                
+                <div class="gateways-grid" id="gateways-grid">
+                    <!-- درگاه‌ها به صورت داینامیک -->
+                </div>
+            </div>
+            
+            <!-- لیست پرداخت‌ها -->
+            <div class="payments-table">
+                <div class="section-header">
+                    <h3>آخرین پرداخت‌ها</h3>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ردیف</th>
+                            <th>مشتری</th>
+                            <th>درگاه</th>
+                            <th>مبلغ</th>
+                            <th>نوع</th>
+                            <th>وضعیت</th>
+                            <th>تاریخ</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-table-body">
+                        <!-- داده‌ها به صورت داینامیک -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- درخواست‌های شارژ -->
+            <div class="recharge-requests">
+                <div class="section-header">
+                    <h3>درخواست‌های شارژ</h3>
+                </div>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ردیف</th>
+                            <th>مشتری</th>
+                            <th>مبلغ</th>
+                            <th>وضعیت</th>
+                            <th>تاریخ</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recharge-requests-body">
+                        <!-- داده‌ها به صورت داینامیک -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- مودال افزودن درگاه -->
+<div id="addGatewayModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('addGatewayModal')">&times;</span>
+        <h2>افزودن درگاه پرداخت جدید</h2>
+        <form id="gateway-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="gateway-name">نام درگاه:</label>
+                    <input type="text" id="gateway-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="gateway-type">نوع درگاه:</label>
+                    <select id="gateway-type" required>
+                        <option value="">انتخاب کنید...</option>
+                        <option value="zarinpal">زرین‌پال</option>
+                        <option value="saman">سامان</option>
+                        <option value="mellat">ملت</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="merchant-id">شناسه پذیرنده:</label>
+                <input type="text" id="merchant-id" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="api-key">کلید API:</label>
+                <input type="password" id="api-key" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="gateway-active">وضعیت:</label>
+                <select id="gateway-active">
+                    <option value="true">فعال</option>
+                    <option value="false">غیرفعال</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-primary">افزودن درگاه</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,494 @@
+
+
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .support-container {
+        padding: 2rem;
+    }
+    
+    .support-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .support-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .stat-label {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .tickets-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .tickets-section h3 {
+        margin-bottom: 1rem;
+        color: var(--admin-dark);
+    }
+    
+    .tickets-filter {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 20px;
+        background: white;
+        color: var(--admin-dark);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        background: var(--admin-primary);
+        color: white;
+        border-color: var(--admin-primary);
+    }
+    
+    .tickets-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .tickets-table th,
+    .tickets-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .tickets-table th {
+        background: var(--admin-primary);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .tickets-table tbody tr:hover {
+        background: var(--admin-light);
+    }
+    
+    .ticket-priority {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .priority-low { background: #10b981; color: white; }
+    .priority-medium { background: #f59e0b; color: white; }
+    .priority-high { background: #ef4444; color: white; }
+    .priority-urgent { background: #dc2626; color: white; }
+    
+    .ticket-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-open { background: #f59e0b; color: white; }
+    .status-in-progress { background: #3b82f6; color: white; }
+    .status-resolved { background: #10b981; color: white; }
+    .status-closed { background: #6b7280; color: white; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        padding: 0.25rem 0.75rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-view {
+        background: var(--admin-primary);
+        color: white;
+    }
+    
+    .btn-assign {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-resolve {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-action:hover {
+        opacity: 0.8;
+    }
+    
+    .categories-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .categories-section h3 {
+        margin-bottom: 1rem;
+        color: var(--admin-dark);
+    }
+    
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .category-card {
+        background: var(--admin-light);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid var(--admin-border);
+    }
+    
+    .category-card.active {
+        border-color: var(--admin-primary);
+    }
+    
+    .category-card h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .category-card p {
+        margin: 0 0 0.5rem 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .category-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-edit {
+        background: #f59e0b;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    /* مودال‌ها */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 600px;
+        position: relative;
+    }
+    
+    .close {
+        color: #aaa;
+        float: left;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+    }
+    
+    .close:hover {
+        color: black;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--admin-dark);
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--admin-border);
+        border-radius: 6px;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--admin-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .btn-submit {
+        width: 100%;
+        background: var(--admin-primary);
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        background: var(--admin-secondary);
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--admin-primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports">گزارش‌ها</a></li>
+                <li><a href="/admin/loyalty">وفاداری</a></li>
+                <li><a href="/admin/payments">پرداخت‌ها</a></li>
+                <li><a href="/admin/ai">هوش مصنوعی</a></li>
+                <li><a href="/admin/support" class="active">پشتیبانی</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="support-container">
+            <div class="support-header">
+                <h2>مدیریت پشتیبانی</h2>
+                <div class="support-actions">
+                    <button class="btn-primary" onclick="showNewCategoryModal()">ایجاد دسته‌بندی جدید</button>
+                </div>
+            </div>
+            
+            <!-- آمار پشتیبانی -->
+            <div class="support-stats">
+                <div class="stat-card">
+                    <div class="stat-label">کل تیکت‌ها</div>
+                    <div class="stat-number" id="total-tickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">تیکت‌های باز</div>
+                    <div class="stat-number" id="open-tickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">در حال پیگیری</div>
+                    <div class="stat-number" id="in-progress-tickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">حل شده</div>
+                    <div class="stat-number" id="resolved-tickets">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">تیکت‌های فوری</div>
+                    <div class="stat-number" id="urgent-tickets">0</div>
+                </div>
+            </div>
+            
+            <!-- بارگذاری -->
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>در حال بارگذاری...</p>
+            </div>
+            
+            <!-- لیست تیکت‌ها -->
+            <div class="tickets-section">
+                <h3>تیکت‌های پشتیبانی</h3>
+                
+                <div class="tickets-filter">
+                    <button class="filter-btn active" onclick="filterTickets('all')">همه</button>
+                    <button class="filter-btn" onclick="filterTickets('open')">باز</button>
+                    <button class="filter-btn" onclick="filterTickets('in_progress')">در حال پیگیری</button>
+                    <button class="filter-btn" onclick="filterTickets('resolved')">حل شده</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="tickets-table">
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>کاربر</th>
+                                <th>موضوع</th>
+                                <th>دسته‌بندی</th>
+                                <th>اولویت</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ ایجاد</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-body">
+                            <!-- داده‌ها به صورت داینامیک -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- دسته‌بندی‌ها -->
+            <div class="categories-section">
+                <div class="section-header">
+                    <h3>دسته‌بندی‌های پشتیبانی</h3>
+                    <button class="btn-primary" onclick="showNewCategoryModal()">ایجاد دسته‌بندی جدید</button>
+                </div>
+                
+                <div class="categories-grid" id="categories-grid">
+                    <!-- دسته‌بندی‌ها به صورت داینامیک -->
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- مودال ایجاد دسته‌بندی جدید -->
+<div id="newCategoryModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('newCategoryModal')">&times;</span>
+        <h2>ایجاد دسته‌بندی پشتیبانی جدید</h2>
+        <form id="new-category-form">
+            <div class="form-group">
+                <label for="category-name">نام دسته‌بندی:</label>
+                <input type="text" id="category-name" required placeholder="نام دسته‌بندی را وارد کنید">
+            </div>
+            
+            <div class="form-group">
+                <label for="category-description">توضیحات:</label>
+                <textarea id="category-description" rows="3" placeholder="توضیحات دسته‌بندی"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="category-priority">اولویت:</label>
+                <select id="category-priority">
+                    <option value="1">کم</option>
+                    <option value="2">متوسط</option>
+                    <option value="3" selected>زیاد</option>
+                    <option value="4">خیلی زیاد</option>
+                    <option value="5">بحرانی</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="category-active">وضعیت:</label>
+                <select id="category-active">
+                    <option value="true" selected>فعال</option>
+                    <option value="false">غیرفعال</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-submit">ایجاد دسته‌بندی</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

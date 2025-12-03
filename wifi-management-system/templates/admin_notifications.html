@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .notification-form {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .notification-list {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .notification-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--admin-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+    
+    .notification-content h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .notification-content p {
+        margin: 0;
+        color: var(--admin-dark);
+        font-size: 0.9rem;
+    }
+    
+    .notification-meta {
+        font-size: 0.8rem;
+        color: var(--gray-color);
+        margin-top: 0.25rem;
+    }
+    
+    .notification-type {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .type-info { background: #3b82f6; color: white; }
+    .type-warning { background: #f59e0b; color: white; }
+    .type-urgent { background: #ef4444; color: white; }
+    .type-success { background: #10b981; color: white; }
+    
+    .notification-actions button {
+        margin-left: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-edit {
+        background: #f59e0b;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications" class="active">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports">گزارش‌ها</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="section-header">
+            <h2>مدیریت اطلاع‌رسانی</h2>
+        </div>
+        
+        <!-- فرم ارسال اعلان جدید -->
+        <div class="notification-form">
+            <h3>ارسال اعلان جدید</h3>
+            <form id="notificationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="notification-title">عنوان:</label>
+                        <input type="text" id="notification-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="notification-type">نوع اعلان:</label>
+                        <select id="notification-type">
+                            <option value="info">اطلاعاتی</option>
+                            <option value="warning">هشدار</option>
+                            <option value="urgent">اهمیت بالا</option>
+                            <option value="success">موفقیت</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notification-message">متن اعلان:</label>
+                    <textarea id="notification-message" rows="3" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="target-type">مخاطب:</label>
+                        <select id="target-type">
+                            <option value="all">همه کاربران</option>
+                            <option value="sellers">فروشندگان</option>
+                            <option value="customers">مشتریان</option>
+                            <option value="specific">کاربر خاص</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="expires-at">تاریخ انقضا (اختیاری):</label>
+                        <input type="date" id="expires-at">
+                    </div>
+                </div>
+                
+                <div class="form-group" id="specific-user-group" style="display: none;">
+                    <label for="specific-user">انتخاب کاربر:</label>
+                    <select id="specific-user">
+                        <option value="">انتخاب کنید...</option>
+                        <!-- گزینه‌ها به صورت داینامیک -->
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn-primary">ارسال اعلان</button>
+            </form>
+        </div>
+        
+        <!-- لیست اعلان‌ها -->
+        <div class="notification-list">
+            <div class="section-header">
+                <h3>اعلان‌های اخیر</h3>
+            </div>
+            <div id="notifications-container">
+                <!-- اعلان‌ها به صورت داینامیک -->
+            </div>
+        </div>
+    </main>
+</div>
+
+{% endblock %}

@@ -1,0 +1,94 @@
+/* پس زمینه */
+body {
+    margin: 0;
+    font-family: "IRANSans", Arial;
+    background: linear-gradient(120deg, #4c6ef5, #364fc7);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.background-animation {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background:url('logo.png');
+    opacity: 0.10;
+    animation: floatBg 20s infinite linear;
+}
+
+@keyframes floatBg {
+    from { background-position: 0 0; }
+    to { background-position: 1000px 0; }
+}
+
+/* کارت ورود */
+.login-container {
+    position: relative;
+    z-index: 10;
+}
+
+.login-card {
+    background: white;
+    padding: 35px 40px;
+    width: 350px;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+.login-card h2 {
+    margin-bottom: 25px;
+    color: #333;
+    font-size: 22px;
+}
+
+/* گروه فرم */
+.form-group {
+    margin-bottom: 18px;
+    text-align: right;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #444;
+}
+
+/* ورودی‌ها */
+.form-group input,
+.form-group select {
+    width: 95%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #bbb;
+    font-size: 14px;
+    outline: none;
+    transition: 0.3s;
+    background: #f7f7f7;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #4c6ef5;
+    box-shadow: 0 0 5px rgba(76, 110, 245, 0.4);
+}
+
+/* دکمه ورود */
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background: #4c6ef5;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    background: #3b5bdb;
+}

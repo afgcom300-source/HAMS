@@ -1,0 +1,6 @@
+psutil==5.9.5
+selenium==4.15.0
+gunicorn==21.2.0
+prometheus-client==0.17.1
+redis==4.6.0
+celery==5.3.1

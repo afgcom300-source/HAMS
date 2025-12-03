@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .help-container {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .help-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .help-header h1 {
+        font-size: 2.5rem;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .help-header p {
+        font-size: 1.2rem;
+        color: #6b7280;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .help-search {
+        max-width: 600px;
+        margin: 2rem auto;
+        position: relative;
+    }
+    
+    .help-search input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .help-search input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 1.2rem;
+    }
+    
+    .help-categories {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .help-category {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-top: 4px solid #3b82f6;
+    }
+    
+    .help-category:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #3b82f6;
+    }
+    
+    .help-category h3 {
+        font-size: 1.5rem;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .help-category p {
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .help-links {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .help-links li {
+        margin-bottom: 0.75rem;
+    }
+    
+    .help-links a {
+        color: #3b82f6;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .help-links a:hover {
+        color: #2563eb;
+        transform: translateX(5px);
+    }
+    
+    .link-icon {
+        font-size: 0.8rem;
+    }
+    
+    .faq-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 2rem 0;
+    }
+    
+    .faq-section h2 {
+        font-size: 2rem;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .faq-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.5rem 0;
+    }
+    
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+    
+    .faq-question {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .faq-answer {
+        color: #6b7280;
+        line-height: 1.6;
+        display: none;
+    }
+    
+    .faq-answer.show {
+        display: block;
+    }
+    
+    .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .toggle-icon.rotate {
+        transform: rotate(180deg);
+    }
+    
+    .contact-section {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        padding: 3rem;
+        border-radius: 12px;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    .contact-section h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .contact-section p {
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .contact-info {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .help-container {
+            padding: 1rem;
+        }
+        
+        .help-header h1 {
+            font-size: 2rem;
+        }
+        
+        .help-categories {
+            grid-template-columns: 1fr;
+        }
+        
+        .contact-info {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <div class="help-header">
+        <h1>راهنمای کاربران</h1>
+        <p>به مرکز راهنمای سیستم مدیریت وای‌فای خوش آمدید. در اینجا می‌توانید به تمامی سوالات و راهنمایی‌های مورد نیاز خود دسترسی پیدا کنید.</p>
+    </div>
+    
+    <div class="help-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-help" placeholder="جستجو در راهنما...">
+    </div>
+    
+    <div class="help-categories">
+        <div class="help-category">
+            <div class="category-icon">👨‍💼</div>
+            <h3>راهنمای ادمین</h3>
+            <p>راهنمای کامل برای مدیران سیستم شامل مدیریت اکانت‌ها، فروشندگان و گزارش‌گیری.</p>
+            <ul class="help-links">
+                <li><a href="#admin-dashboard"><span class="link-icon">→</span> داشبورد ادمین</a></li>
+                <li><a href="#admin-accounts"><span class="link-icon">→</span> مدیریت اکانت‌ها</a></li>
+                <li><a href="#admin-sellers"><span class="link-icon">→</span> مدیریت فروشندگان</a></li>
+                <li><a href="#admin-reports"><span class="link-icon">→</span> گزارش‌گیری</a></li>
+            </ul>
+        </div>
+        
+        <div class="help-category">
+            <div class="category-icon">🏪</div>
+            <h3>راهنمای فروشنده</h3>
+            <p>راهنمای کامل برای فروشندگان شامل مدیریت اکانت‌ها، ثبت فروش و پیگیری کمیسیون.</p>
+            <ul class="help-links">
+                <li><a href="#seller-dashboard"><span class="link-icon">→</span> داشبورد فروشنده</a></li>
+                <li><a href="#seller-accounts"><span class="link-icon">→</span> اکانت‌های من</a></li>
+                <li><a href="#seller-sales"><span class="link-icon">→</span> فروش‌های من</a></li>
+                <li><a href="#seller-commission"><span class="link-icon">→</span> کمیسیون</a></li>
+            </ul>
+        </div>
+        
+        <div class="help-category">
+            <div class="category-icon">👤</div>
+            <h3>راهنمای مشتری</h3>
+            <p>راهنمای کامل برای مشتریان شامل پیگیری مصرف، مشاهده وضعیت و پشتیبانی.</p>
+            <ul class="help-links">
+                <li><a href="#customer-dashboard"><span class="link-icon">→</span> داشبورد مشتری</a></li>
+                <li><a href="#customer-usage"><span class="link-icon">→</span> آمار مصرف</a></li>
+                <li><a href="#customer-account"><span class="link-icon">→</span> اطلاعات اکانت</a></li>
+                <li><a href="#customer-support"><span class="link-icon">→</span> پشتیبانی</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="faq-section">
+        <h2>سوالات متداول</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>چگونه اکانت جدید دریافت کنم؟</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <p>فروشندگان می‌توانند اکانت‌های جدید از ادمین دریافت کنند. برای این منظور باید با ادمین تماس بگیرند و درخواست اکانت ثبت کنند. ادمین سپس اکانت‌های مورد نیاز را به فروشنده اختصاص می‌دهد.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>چگونه مصرف خود را پیگیری کنم؟</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <p>وارد پنل مشتری شوید و به بخش "آمار مصرف" بروید. در این بخش می‌توانید نمودارهای مصرف روزانه و مصرف بر اساس ساعت را مشاهده کنید. همچنین هشدارهای مصرف به صورت خودکار نمایش داده می‌شوند.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>چگونه کمیسیون خود را دریافت کنم؟</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <p>وارد پنل فروشنده شوید و به بخش "کمیسیون" بروید. مبلغ کمیسیون شما در این بخش نمایش داده می‌شود. برای دریافت کمیسیون، روی "درخواست تسویه" کلیک کنید و اطلاعات حساب بانکی خود را وارد کنید.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>چگونه مشکل خود را گزارش کنم؟</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <p>به بخش "پشتیبانی" بروید و روی "ایجاد تیکت جدید" کلیک کنید. موضوع و توضیحات مشکل خود را وارد کنید و تیکت خود را ارسال کنید. تیم پشتیبانی در اولین فرصت به درخواست شما پاسخ خواهند داد.</p>
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">
+                <span>چگونه رمز عبور خود را تغییر دهم؟</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="faq-answer">
+                <p>وارد پنل خود شوید (فروشنده یا مشتری) و به بخش "پروفایل" یا "اطلاعات اکانت" بروید. در این بخش می‌توانید رمز عبور جدید خود را وارد کنید و تغییرات را ذخیره کنید.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="contact-section">
+        <h2>تماس با پشتیبانی</h2>
+        <p>در صورت بروز هرگونه مشکل یا داشتن سوالات بیشتر، با ما در ارتباط باشید.</p>
+        <div 

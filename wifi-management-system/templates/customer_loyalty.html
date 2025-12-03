@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customer.css') }}">
+<style>
+    .loyalty-container {
+        padding: 2rem;
+    }
+    
+    .loyalty-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--customer-border);
+    }
+    
+    .points-display {
+        text-align: center;
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .points-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--customer-primary);
+        margin: 1rem 0;
+    }
+    
+    .points-label {
+        color: var(--customer-dark);
+        font-size: 1.2rem;
+    }
+    
+    .level-display {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 1.1rem;
+        margin-top: 1rem;
+    }
+    
+    .level-gold { background: linear-gradient(45deg, #fbbf24, #f59e0b); color: #92400e; }
+    .level-silver { background: linear-gradient(45deg, #94a3b8, #64748b); color: white; }
+    .level-bronze { background: linear-gradient(45deg, #cd7f32, #a16207); color: white; }
+    
+    .rewards-section {
+        margin-bottom: 2rem;
+    }
+    
+    .rewards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .reward-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--customer-primary);
+        transition: transform 0.3s ease;
+    }
+    
+    .reward-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .reward-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .reward-card p {
+        margin: 0 0 1rem 0;
+        color: var(--customer-dark);
+        font-size: 0.9rem;
+    }
+    
+    .reward-points {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--customer-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .reward-benefits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .benefit-badge {
+        background: var(--customer-light);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-redeem {
+        width: 100%;
+        background: var(--customer-primary);
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .btn-redeem:hover {
+        background: var(--customer-secondary);
+    }
+    
+    .btn-redeem:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+    
+    .transactions-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    
+    .transactions-section h3 {
+        margin-bottom: 1rem;
+        color: var(--customer-dark);
+    }
+    
+    .transactions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .transaction-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--customer-light);
+        border-radius: 8px;
+        border-right: 3px solid var(--customer-primary);
+    }
+    
+    .transaction-info h4 {
+        margin: 0 0 0.25rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .transaction-info p {
+        margin: 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .transaction-points {
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .points-positive {
+        color: var(--success-color);
+    }
+    
+    .points-negative {
+        color: var(--danger-color);
+    }
+    
+    .no-rewards {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+    
+    .progress-container {
+        margin: 1rem 0;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: #e5e7eb;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--customer-primary), var(--customer-secondary));
+        border-radius: 6px;
+        transition: width 0.5s ease;
+    }
+    
+    .progress-text {
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--customer-dark);
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="customer-container">
+    <!-- Header -->
+    <header class="customer-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <h3 id="customer-name">نام مشتری</h3>
+                        <p>سیستم وفاداری</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="window.location.href='/customer'">بازگشت</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="customer-main">
+        <div class="container">
+            <div class="loyalty-container">
+                <div class="loyalty-header">
+                    <h2>سیستم وفاداری</h2>
+                    <div class="level-display level-bronze" id="customer-level">سطح برنزی</div>
+                </div>
+                
+                <!-- نمایش امتیازات -->
+                <div class="points-display">
+                    <div class="points-label">امتیازات شما</div>
+                    <div class="points-number" id="current-points">0</div>
+                    <div class="points-label">امتیاز</div>
+                    
+                    <!-- نوار پیشرفت به سطح بعدی -->
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="level-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">0% به سطح نقره‌ای</div>
+                    </div>
+                </div>
+                
+                <!-- جوایز قابل استفاده -->
+                <div class="rewards-section">
+                    <h3>جوایز قابل استفاده</h3>
+                    <div class="rewards-grid" id="rewards-grid">
+                        <!-- جوایز به صورت داینامیک -->
+                    </div>
+                </div>
+                
+                <!-- تاریخچه تراکنش‌ها -->
+                <div class="transactions-section">
+                    <h3>آخرین تراکنش‌های وفاداری</h3>
+                    <div class="transactions-list" id="transactions-list">
+                        <!-- تراکنش‌ها به صورت داینامیک -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// بارگذاری اطلاعات وفاداری مشتری
+function loadCustomerLoyaltyInfo() {
+    fetch('/api/customer/loyalty/info')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('current-points').textContent = data.current_points;
+        document.getElementById('customer-name').textContent = data.customer_name;
+        
+        // تعیین سطح مشتری
+        const levelElement = document.getElementById('customer-level');
+        levelElement.className = 'level-display';
+        levelElement.classList.add(`level-${data.level}`);
+        levelElement.textContent = `سطح ${data.level === 'gold' ? 'طلایی' : data.level === 'silver' ? 'نقره‌ای' : 'برنزی'}`;
+        
+        // به‌روزرسانی نوار پیشرفت
+        updateLevelProgress(data);
+    })
+    .catch(error => {
+        console.error('Error loading loyalty info:', error);
+    });
+}
+
+// به‌روزرسانی نوار پیشرفت به سطح بعدی
+function updateLevelProgress(loyaltyData) {
+    let progress = 0;
+    let nextLevel = '';
+    
+    if (loyaltyData.level === 'bronze') {
+        progress = (loyaltyData.total_points / 500) * 100;
+        nextLevel = 'نقره‌ای';
+    } else if (loyaltyData.level === 'silver') {
+        progress = ((loyaltyData.total_points - 500) / 500) * 100;
+        nextLevel = 'طلایی';
+    } else {
+        progress = 100;
+        nextLevel = 'حداکثر';
+    }
+    
+    // محدود کردن پیشرفت به حداکثر 100%
+    progress = Math.min(progress, 100);
+    
+    document.getElementById('level-progress').style.width = `${progress}%`;
+    document.getElementById('progress-text').textContent = `${Math.round(progress)}% به سطح ${nextLevel}`;
+}
+
+// بارگذاری جوایز قابل استفاده
+function loadAvailableRewards() {
+    fetch('/api/customer/loyalty/rewards')
+    .then(response => response.json())
+    .then(rewards => {
+        const grid = document.getElementById('rewards-grid');
+        grid.innerHTML = '';
+        
+        if (rewards.length === 0) {
+            grid.innerHTML = '<div class="no-rewards">جوایزی برای استفاده وجود ندارد</div>';
+            return;
+        }
+        
+        rewards.forEach(reward => {
+            const card = `
+                <div class="reward-card">
+                    <h3>${reward.name}</h3>
+                    <p>${reward.description}</p>
+                    <div class="reward-points">${reward.points_required} امتیاز</div>
+                    <div class="reward-benefits">
+                        ${reward.discount_percentage > 0 ? `<span class="benefit-badge">${reward.discount_percentage}% تخفیف</span>` : ''}
+                        ${reward.free_data_gb > 0 ? `<span class="benefit-badge">${reward.free_data_gb} GB رایگان</span>` : ''}
+                    </div>
+                    <button class="btn-redeem" onclick="redeemReward(${reward.id})" 
+                            ${parseInt(document.getElementById('current-points').textContent) < reward.points_required ? 'disabled' : ''}>
+                        استفاده از جایزه
+                    </button>
+                </div>
+            `;
+            grid.innerHTML += card;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading rewards:', error);
+    });
+}
+
+// استفاده از جایزه
+function redeemReward(rewardId) {
+    if (!confirm('آیا از استفاده از این جایزه مطمئن هستید؟')) {
+        return;
+    }
+    
+    fetch(`/api/customer/loyalty/redeem/${rewardId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('جایزه با موفقیت استفاده شد!');
+            // به‌روزرسانی امتیازات و جوایز
+            loadCustomerLoyaltyInfo();
+            loadAvailableRewards();
+            loadTransactions();
+        } else {
+            alert('خطا: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در اتصال به سرور');
+    });
+}
+
+// بارگذاری تراکنش‌ها
+function loadTransactions() {
+    fetch('/api/customer/loyalty/transactions')
+    .then(response => response.json())
+    .then(transactions => {
+        const list = document.getElementById('transactions-list');
+        list.innerHTML = '';
+        
+        if (transactions.length === 0) {
+            list.innerHTML = '<div class="no-rewards">تراکنشی وجود ندارد</div>';
+            return;
+        }
+        
+        transactions.forEach(transaction => {
+            const isPositive = transaction.points > 0;
+            const pointsClass = isPositive ? 'points-positive' : 'points-negative';
+            const pointsText = isPositive ? `+${transaction.points}` : transaction.points;
+            
+            const item = `
+                <div class="transaction-item">
+                    <div class="transaction-info">
+                        <h4>${transaction.description}</h4>
+                        <p>${transaction.date}</p>
+                    </div>
+                    <div class="transaction-points ${pointsClass}">${pointsText}</div>
+                </div>
+            `;
+            list.innerHTML += item;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading transactions:', error);
+    });
+}
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    loadCustomerLoyaltyInfo();
+    loadAvailableRewards();
+    loadTransactions();
+});
+</script>
+{% endblock %}

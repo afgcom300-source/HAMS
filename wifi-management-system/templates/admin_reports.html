@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .reports-container {
+        padding: 2rem;
+    }
+    
+    .report-types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-type-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid var(--admin-border);
+    }
+    
+    .report-type-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--admin-primary);
+    }
+    
+    .report-type-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .report-type-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .report-type-card p {
+        margin: 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .report-generator {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+        display: none;
+    }
+    
+    .report-generator.active {
+        display: block;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .report-results {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+        display: none;
+    }
+    
+    .report-results.active {
+        display: block;
+    }
+    
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: 0.75rem;
+        text-align: right;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .report-table th {
+        background: var(--admin-primary);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .report-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .summary-card {
+        background: var(--admin-light);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .summary-card h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+        font-size: 0.9rem;
+    }
+    
+    .summary-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+    }
+    
+    .saved-reports {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    
+    .saved-reports-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .saved-report-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--admin-light);
+        border-radius: 8px;
+        border-right: 3px solid var(--admin-primary);
+    }
+    
+    .report-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .report-info p {
+        margin: 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .report-actions button {
+        margin-left: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    
+    .btn-download {
+        background: var(--admin-primary);
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports" class="active">گزارش‌ها</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="reports-container">
+            <div class="section-header">
+                <h2>گزارش‌گیری</h2>
+            </div>
+            
+            <!-- انواع گزارش‌ها -->
+            <div class="report-types-grid" id="report-types-grid">
+                <!-- انواع گزارش‌ها به صورت داینامیک -->
+            </div>
+            
+            <!-- فرم تولید گزارش -->
+            <div class="report-generator" id="report-generator">
+                <h3 id="generator-title">تولید گزارش</h3>
+                <form id="report-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">تاریخ شروع:</label>
+                            <input type="date" id="start-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">تاریخ پایان:</label>
+                            <input type="date" id="end-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" id="additional-filters">
+                        <!-- فیلترهای اضافی به صورت داینامیک -->
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="report-format">فرمت خروجی:</label>
+                            <select id="report-format">
+                                <option value="json">مشاهده آنلاین</option>
+                                <option value="csv">دانلود CSV</option>
+                                <option value="pdf">دانلود PDF</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">تولید گزارش</button>
+                    <button type="button" class="btn-secondary" onclick="cancelReportGeneration()">لغو</button>
+                </form>
+            </div>
+            
+            <!-- نتایج گزارش -->
+            <div class="report-results" id="report-results">
+                <h3>نتایج گزارش</h3>
+                <div class="report-summary" id="report-summary">
+                    <!-- خلاصه گزارش -->
+                </div>
+                <div class="report-table-container" id="report-table-container">
+                    <!-- جدول گزارش -->
+                </div>
+                <div class="report-actions">
+                    <button class="btn-primary" onclick="downloadReport()">دانلود گزارش</button>
+                    <button class="btn-secondary" onclick="newReport()">گزارش جدید</button>
+                </div>
+            </div>
+            
+            <!-- گزارش‌های ذخیره شده -->
+            <div class="saved-reports">
+                <div class="section-header">
+                    <h3>گزارش‌های ذخیره شده</h3>
+                </div>
+                <div class="saved-reports-list" id="saved-reports-list">
+                    <!-- گزارش‌های ذخیره شده به صورت داینامیک -->
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% endblock %}

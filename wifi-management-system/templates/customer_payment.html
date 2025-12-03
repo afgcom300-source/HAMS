@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customer.css') }}">
+<style>
+    .payment-container {
+        padding: 2rem;
+    }
+    
+    .wallet-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .balance-amount {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--customer-primary);
+        margin: 1rem 0;
+    }
+    
+    .balance-label {
+        color: var(--customer-dark);
+        font-size: 1.2rem;
+    }
+    
+    .payment-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .payment-section h3 {
+        margin-bottom: 1.5rem;
+        color: var(--customer-dark);
+        text-align: center;
+    }
+    
+    .payment-methods {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .payment-method {
+        background: var(--customer-light);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid var(--customer-border);
+    }
+    
+    .payment-method:hover {
+        border-color: var(--customer-primary);
+        transform: translateY(-3px);
+    }
+    
+    .payment-method.selected {
+        border-color: var(--customer-primary);
+        background: #e0e7ff;
+    }
+    
+    .payment-method-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--customer-primary);
+    }
+    
+    .payment-method h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .payment-form {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .amount-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--customer-border);
+        border-radius: var(--border-radius);
+        font-size: 1.5rem;
+        text-align: center;
+        font-weight: 700;
+        color: var(--customer-primary);
+    }
+    
+    .amount-input:focus {
+        outline: none;
+        border-color: var(--customer-primary);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    }
+    
+    .quick-amounts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    .quick-amount {
+        padding: 0.5rem 1rem;
+        background: var(--customer-light);
+        border: 1px solid var(--customer-border);
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-amount:hover {
+        background: var(--customer-primary);
+        color: white;
+        border-color: var(--customer-primary);
+    }
+    
+    .btn-pay {
+        width: 100%;
+        background: var(--customer-primary);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .btn-pay:hover {
+        background: var(--customer-secondary);
+    }
+    
+    .btn-pay:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+    
+    .payment-history {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    
+    .payment-history h3 {
+        margin-bottom: 1rem;
+        color: var(--customer-dark);
+    }
+    
+    .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .payment-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--customer-light);
+        border-radius: 8px;
+        border-right: 3px solid var(--customer-primary);
+    }
+    
+    .payment-info h4 {
+        margin: 0 0 0.25rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .payment-info p {
+        margin: 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .payment-amount {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+    
+    .amount-success {
+        color: var(--success-color);
+    }
+    
+    .amount-failed {
+        color: var(--danger-color);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-success { background: #10b981; color: white; }
+    .status-failed { background: #ef4444; color: white; }
+    .status-pending { background: #f59e0b; color: white; }
+    
+    .no-history {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="customer-container">
+    <!-- Header -->
+    <header class="customer-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <h3 id="customer-name">نام مشتری</h3>
+                        <p>پرداخت و شارژ حساب</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="window.location.href='/customer'">بازگشت</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="customer-main">
+        <div class="container">
+            <div class="payment-container">
+                <!-- موجودی کیف پول -->
+                <div class="wallet-section">
+                    <div class="balance-label">موجودی کیف پول شما</div>
+                    <div class="balance-amount" id="wallet-balance">0</div>
+                    <div class="balance-label">ریال</div>
+                </div>
+                
+                <!-- بخش پرداخت -->
+                <div class="payment-section">
+                    <h3>شارژ حساب</h3>
+                    
+                    <!-- روش‌های پرداخت -->
+                    <div class="payment-methods" id="payment-methods">
+                        <!-- روش‌های پرداخت به صورت داینامیک -->
+                    </div>
+                    
+                    <!-- فرم پرداخت -->
+                    <div class="payment-form">
+                        <input type="number" 
+                               id="payment-amount" 
+                               class="amount-input" 
+                               placeholder="مبلغ به ریال" 
+                               min="1000">
+                        
+                        <div class="quick-amounts">
+                            <div class="quick-amount" onclick="setQuickAmount(10000)">۱۰,۰۰۰</div>
+                            <div class="quick-amount" onclick="setQuickAmount(20000)">۲۰,۰۰۰</div>
+                            <div class="quick-amount" onclick="setQuickAmount(50000)">۵۰,۰۰۰</div>
+                            <div class="quick-amount" onclick="setQuickAmount(100000)">۱۰۰,۰۰۰</div>
+                        </div>
+                        
+                        <button class="btn-pay" id="pay-button" onclick="processPayment()" disabled>
+                            پرداخت
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- تاریخچه پرداخت‌ها -->
+                <div class="payment-history">
+                    <h3>آخرین پرداخت‌ها</h3>
+                    <div class="history-list" id="payment-history">
+                        <!-- تاریخچه به صورت داینامیک -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+let selectedGateway = null;
+let walletBalance = 0;
+
+// بارگذاری اطلاعات کیف پول
+function loadWalletBalance() {
+    fetch('/api/customer/wallet/balance')
+    .then(response => response.json())
+    .then(data => {
+        walletBalance = data.balance;
+        document.getElementById('wallet-balance').textContent = data.balance.toLocaleString();
+        document.getElementById('customer-name').textContent = 'نام مشتری'; // باید از session بگیرید
+    })
+    .catch(error => {
+        console.error('Error loading wallet balance:', error);
+    });
+}
+
+// بارگذاری روش‌های پرداخت
+function loadPaymentMethods() {
+    fetch('/api/payment/gateways')
+    .then(response => response.json())
+    .then(gateways => {
+        const container = document.getElementById('payment-methods');
+        container.innerHTML = '';
+        
+        if (gateways.length === 0) {
+            container.innerHTML = '<div class="no-history">درگاه پرداختی در دسترس نیست</div>';
+            return;
+        }
+        
+        gateways.forEach(gateway => {
+            const method = `
+                <div class="payment-method" onclick="selectPaymentMethod(${gateway.id}, '${gateway.name}')">
+                    <div class="payment-method-icon">💳</div>
+                    <h4>${gateway.name}</h4>
+                    <p>پرداخت ایمن</p>
+                </div>
+            `;
+            container.innerHTML += method;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading payment methods:', error);
+    });
+}
+
+// انتخاب روش پرداخت
+function selectPaymentMethod(gatewayId, gatewayName) {
+    selectedGateway = {id: gatewayId, name: gatewayName};
+    
+    // حذف کلاس selected از همه روش‌ها
+    document.querySelectorAll('.payment-method').forEach(method => {
+        method.classList.remove('selected');
+    });
+    
+    // اضافه کردن کلاس selected به روش انتخاب شده
+    event.target.closest('.payment-method').classList.add('selected');
+    
+    // فعال کردن دکمه پرداخت
+    checkPaymentButton();
+}
+
+// تنظیم مبلغ سریع
+function setQuickAmount(amount) {
+    document.getElementById('payment-amount').value = amount;
+    checkPaymentButton();
+}
+
+// بررسی وضعیت دکمه پرداخت
+function checkPaymentButton() {
+    const amount = document.getElementById('payment-amount').value;
+    const button = document.getElementById('pay-button');
+    
+    if (amount && parseInt(amount) > 0 && selectedGateway) {
+        button.disabled = false;
+    } else {
+        button.disabled = true;
+    }
+}
+
+// پردازش پرداخت
+function processPayment() {
+    const amount = document.getElementById('payment-amount').value;
+    const customer_id = 1; // باید از session بگیرید
+    
+    if (!amount || parseInt(amount) <= 0) {
+        alert('لطفاً مبلغ معتبر وارد کنید');
+        return;
+    }
+    
+    if (!selectedGateway) {
+        alert('لطفاً یک روش پرداخت انتخاب کنید');
+        return;
+    }
+    
+    // غیرفعال کردن دکمه
+    const button = document.getElementById('pay-button');
+    button.disabled = true;
+    button.textContent = 'در حال پردازش...';
+    
+    // ارسال درخواست پرداخت
+    fetch('/api/payment/request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            customer_id: customer_id,
+            amount: parseInt(amount),
+            gateway_id: selectedGateway.id,
+            payment_type: 'recharge',
+            description: `شارژ حساب به مبلغ ${amount.toLocaleString()} ریال`
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // هدایت به صفحه پرداخت
+            window.location.href = data.payment_url;
+        } else {
+            alert('خطا: ' + data.message);
+            button.disabled = false;
+            button.textContent = 'پرداخت';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در اتصال به سرور');
+        button.disabled = false;
+        button.textContent = 'پرداخت';
+    });
+}
+
+// بارگذاری تاریخچه پرداخت‌ها
+function loadPaymentHistory() {
+    fetch('/api/customer/payments/history')
+    .then(response => response.json())
+    .then(payments => {
+        const container = document.getElementById('payment-history');
+        container.innerHTML = '';
+        
+        if (payments.length === 0) {
+            container.innerHTML = '<div class="no-history">پرداختی ثبت نشده است</div>';
+            return;
+        }
+        
+        payments.forEach(payment => {
+            const amountClass = payment.status === 'success' ? 'amount-success' : 'amount-failed';
+            const statusClass = `status-${payment.status}`;
+            const statusText = payment.status === 'success' ? 'موفق' : 
+                             payment.status === 'failed' ? 'ناموفق' : 'در انتظار';
+            
+            const item = `
+                <div class="payment-item">
+                    <div class="payment-info">
+                        <h4>${payment.description || 'پرداخت'}</h4>
+                        <p>${payment.created_at}</p>
+                    </div>
+                    <div class="payment-details">
+                        <div class="payment-amount ${amountClass}">${payment.amount.toLocaleString()} ریال</div>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += item;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading payment history:', error);
+    });
+}
+
+// اضافه کردن event listener برای ورودی مبلغ
+document.getElementById('payment-amount').addEventListener('input', checkPaymentButton);
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    loadWalletBalance();
+    loadPaymentMethods();
+    loadPaymentHistory();
+});
+</script>
+{% endblock %}

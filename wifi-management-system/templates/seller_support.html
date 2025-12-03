@@ -1,0 +1,655 @@
+
+
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seller.css') }}">
+<style>
+    .support-container {
+        padding: 2rem;
+    }
+    
+    .support-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--seller-border);
+    }
+    
+    .support-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-new-ticket {
+        background: var(--seller-primary);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-new-ticket:hover {
+        background: var(--seller-accent);
+        transform: translateY(-2px);
+    }
+    
+    .tickets-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .tickets-section h3 {
+        margin-bottom: 1rem;
+        color: var(--seller-dark);
+    }
+    
+    .tickets-filter {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--seller-border);
+        border-radius: 20px;
+        background: white;
+        color: var(--seller-dark);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        background: var(--seller-primary);
+        color: white;
+        border-color: var(--seller-primary);
+    }
+    
+    .tickets-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .ticket-item {
+        padding: 1rem;
+        background: var(--seller-light);
+        border-radius: 8px;
+        border-right: 3px solid var(--seller-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .ticket-item:hover {
+        background: #dcfce7;
+        transform: translateX(-5px);
+    }
+    
+    .ticket-item.open {
+        border-right-color: var(--warning-color);
+    }
+    
+    .ticket-item.in-progress {
+        border-right-color: #3b82f6;
+    }
+    
+    .ticket-item.resolved {
+        border-right-color: var(--success-color);
+    }
+    
+    .ticket-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .ticket-subject {
+        font-weight: 500;
+        color: var(--seller-dark);
+        margin: 0;
+    }
+    
+    .ticket-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.8rem;
+        color: var(--gray-color);
+    }
+    
+    .ticket-category {
+        background: var(--seller-light);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .ticket-priority {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .priority-low { background: #10b981; color: white; }
+    .priority-medium { background: #f59e0b; color: white; }
+    .priority-high { background: #ef4444; color: white; }
+    .priority-urgent { background: #dc2626; color: white; }
+    
+    .ticket-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-open { background: #f59e0b; color: white; }
+    .status-in-progress { background: #3b82f6; color: white; }
+    .status-resolved { background: #10b981; color: white; }
+    .status-closed { background: #6b7280; color: white; }
+    
+    .faq-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    
+    .faq-section h3 {
+        margin-bottom: 1rem;
+        color: var(--seller-dark);
+    }
+    
+    .faqs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+    
+    .faq-card {
+        background: var(--seller-light);
+        padding: 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .faq-card:hover {
+        background: #dcfce7;
+        transform: translateY(-2px);
+    }
+    
+    .faq-question {
+        font-weight: 500;
+        color: var(--seller-dark);
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .faq-answer {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* مودال ایجاد تیکت */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 600px;
+        position: relative;
+    }
+    
+    .close {
+        color: #aaa;
+        float: left;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        left: 1rem;
+        top: 1rem;
+    }
+    
+    .close:hover {
+        color: black;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--seller-dark);
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--seller-border);
+        border-radius: 6px;
+        font-family: inherit;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--seller-primary);
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+    
+    .btn-submit {
+        width: 100%;
+        background: var(--seller-primary);
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        background: var(--seller-accent);
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--seller-primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="seller-container">
+    <!-- Header -->
+    <header class="seller-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">🎫</div>
+                    <div class="user-details">
+                        <h3 id="seller-name">نام فروشنده</h3>
+                        <p>پشتیبانی و تیکت‌ها</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="window.location.href='/seller'">بازگشت</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="seller-main">
+        <div class="container">
+            <div class="support-container">
+                <div class="support-header">
+                    <h2>پشتیبانی</h2>
+                    <div class="support-actions">
+                        <button class="btn-new-ticket" onclick="showNewTicketModal()">
+                            <span>➕</span>
+                            <span>ایجاد تیکت جدید</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- بارگذاری -->
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>در حال بارگذاری...</p>
+                </div>
+                
+                <!-- لیست تیکت‌ها -->
+                <div class="tickets-section">
+                    <h3>تیکت‌های شما</h3>
+                    
+                    <div class="tickets-filter">
+                        <button class="filter-btn active" onclick="filterTickets('all')">همه</button>
+                        <button class="filter-btn" onclick="filterTickets('open')">باز</button>
+                        <button class="filter-btn" onclick="filterTickets('in_progress')">در حال پیگیری</button>
+                        <button class="filter-btn" onclick="filterTickets('resolved')">حل شده</button>
+                    </div>
+                    
+                    <div class="tickets-list" id="tickets-list">
+                        <!-- تیکت‌ها به صورت داینامیک -->
+                    </div>
+                </div>
+                
+                <!-- سوالات متداول -->
+                <div class="faq-section">
+                    <h3>سوالات متداول</h3>
+                    <div class="faqs-grid" id="faqs-grid">
+                        <!-- سوالات متداول به صورت داینامیک -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- مودال ایجاد تیکت جدید -->
+<div id="newTicketModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('newTicketModal')">&times;</span>
+        <h2>ایجاد تیکت پشتیبانی جدید</h2>
+        <form id="new-ticket-form">
+            <div class="form-group">
+                <label for="ticket-category">دسته‌بندی:</label>
+                <select id="ticket-category" required>
+                    <option value="">انتخاب کنید...</option>
+                    <!-- گزینه‌ها به صورت داینامیک -->
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-subject">موضوع:</label>
+                <input type="text" id="ticket-subject" required placeholder="موضوع تیکت را وارد کنید">
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-priority">اولویت:</label>
+                <select id="ticket-priority" required>
+                    <option value="low">کم</option>
+                    <option value="medium" selected>متوسط</option>
+                    <option value="high">زیاد</option>
+                    <option value="urgent">فوری</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ticket-description">توضیحات:</label>
+                <textarea id="ticket-description" rows="5" required placeholder="شرح مشکل خود را به طور کامل بنویسید"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-submit">ارسال تیکت</button>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentFilter = 'all';
+
+// نمایش مودال ایجاد تیکت
+function showNewTicketModal() {
+    loadCategories();
+    document.getElementById('newTicketModal').style.display = 'block';
+}
+
+// بستن مودال
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// بارگذاری دسته‌بندی‌ها
+function loadCategories() {
+    fetch('/api/support/categories')
+    .then(response => response.json())
+    .then(categories => {
+        const select = document.getElementById('ticket-category');
+        select.innerHTML = '<option value="">انتخاب کنید...</option>';
+        
+        categories.forEach(category => {
+            const option = `<option value="${category.id}">${category.name}</option>`;
+            select.innerHTML += option;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading categories:', error);
+    });
+}
+
+// ایجاد تیکت جدید
+document.getElementById('new-ticket-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const ticketData = {
+        user_id: 1, // باید از session بگیرید
+        user_type: 'seller',
+        category_id: parseInt(document.getElementById('ticket-category').value),
+        subject: document.getElementById('ticket-subject').value,
+        description: document.getElementById('ticket-description').value,
+        priority: document.getElementById('ticket-priority').value
+    };
+    
+    // غیرفعال کردن دکمه
+    const submitBtn = document.querySelector('.btn-submit');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'در حال ارسال...';
+    
+    fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(ticketData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تیکت با موفقیت ایجاد شد');
+            closeModal('newTicketModal');
+            document.getElementById('new-ticket-form').reset();
+            loadTickets(); // بارگذاری مجدد تیکت‌ها
+        } else {
+            alert('خطا: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در اتصال به سرور');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
+});
+
+// بارگذاری تیکت‌ها
+function loadTickets() {
+    document.getElementById('loading').style.display = 'block';
+    
+    fetch('/api/support/tickets/seller/1') // باید user_id از session بگیرید
+    .then(response => response.json())
+    .then(tickets => {
+        displayTickets(tickets);
+        document.getElementById('loading').style.display = 'none';
+    })
+    .catch(error => {
+        console.error('Error loading tickets:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('tickets-list').innerHTML = '<div class="no-data">خطا در بارگذاری تیکت‌ها</div>';
+    });
+}
+
+// نمایش تیکت‌ها
+function displayTickets(tickets) {
+    const container = document.getElementById('tickets-list');
+    container.innerHTML = '';
+    
+    if (tickets.length === 0) {
+        container.innerHTML = '<div class="no-data">تیکتی وجود ندارد</div>';
+        return;
+    }
+    
+    // فیلتر کردن بر اساس وضعیت
+    let filteredTickets = tickets;
+    if (currentFilter !== 'all') {
+        filteredTickets = tickets.filter(ticket => ticket.status === currentFilter);
+    }
+    
+    if (filteredTickets.length === 0) {
+        container.innerHTML = '<div class="no-data">تیکتی با این وضعیت وجود ندارد</div>';
+        return;
+    }
+    
+    filteredTickets.forEach(ticket => {
+        const statusClass = `status-${ticket.status.replace('_', '-')}`;
+        const priorityClass = `priority-${ticket.priority}`;
+        
+        const item = `
+            <div class="ticket-item ${ticket.status.replace('_', '-')}" onclick="viewTicket(${ticket.id})">
+                <div class="ticket-header">
+                    <h4 class="ticket-subject">${ticket.subject}</h4>
+                    <div class="ticket-meta">
+                        <span class="ticket-status ${statusClass}">${getStatusText(ticket.status)}</span>
+                        <span class="ticket-priority ${priorityClass}">${getPriorityText(ticket.priority)}</span>
+                    </div>
+                </div>
+                <div class="ticket-meta">
+                    <span class="ticket-category">${ticket.category_name}</span>
+                    <span>${ticket.created_at}</span>
+                </div>
+            </div>
+        `;
+        container.innerHTML += item;
+    });
+}
+
+// فیلتر تیکت‌ها
+function filterTickets(status) {
+    currentFilter = status;
+    
+    // به‌روزرسانی دکمه‌های فیلتر
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    loadTickets();
+}
+
+// مشاهده تیکت (باید صفحه جداگانه ایجاد شود)
+function viewTicket(ticketId) {
+    alert(`مشاهده تیکت شماره ${ticketId}`);
+    // در اینجا باید به صفحه مشاهده تیکت بروید
+}
+
+// دریافت متن وضعیت
+function getStatusText(status) {
+    const statusMap = {
+        'open': 'باز',
+        'in_progress': 'در حال پیگیری',
+        'resolved': 'حل شده',
+        'closed': 'بسته شده'
+    };
+    return statusMap[status] || status;
+}
+
+// دریافت متن اولویت
+function getPriorityText(priority) {
+    const priorityMap = {
+        'low': 'کم',
+        'medium': 'متوسط',
+        'high': 'زیاد',
+        'urgent': 'فوری'
+    };
+    return priorityMap[priority] || priority;
+}
+
+// بارگذاری سوالات متداول
+function loadFAQs() {
+    fetch('/api/support/faqs')
+    .then(response => response.json())
+    .then(faqs => {
+        const container = document.getElementById('faqs-grid');
+        container.innerHTML = '';
+        
+        if (faqs.length === 0) {
+            container.innerHTML = '<div class="no-data">سوال متداولی وجود ندارد</div>';
+            return;
+        }
+        
+        faqs.forEach(faq => {
+            const card = `
+                <div class="faq-card" onclick="showFAQAnswer('${faq.question}', '${faq.answer}')">
+                    <h4 class="faq-question">${faq.question}</h4>
+                    <p class="faq-answer">${faq.answer.substring(0, 100)}...</p>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading FAQs:', error);
+    });
+}
+
+// نمایش پاسخ سوال متداول
+function showFAQAnswer(question, answer) {
+    alert(`${question}\n\n${answer}`);
+}
+
+// بستن مودال با کلیک خارج از آن
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('seller-name').textContent = 'نام فروشنده'; // باید از session بگیرید
+    loadTickets();
+    loadFAQs();
+});
+</script>
+{% endblock %}

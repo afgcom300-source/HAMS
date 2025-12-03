@@ -1,0 +1,538 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/customer.css') }}">
+<style>
+    .ai-container {
+        padding: 2rem;
+    }
+    
+    .ai-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--customer-border);
+    }
+    
+    .predictions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .prediction-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--customer-primary);
+        transition: transform 0.3s ease;
+    }
+    
+    .prediction-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .prediction-card.critical {
+        border-left-color: var(--danger-color);
+    }
+    
+    .prediction-card.warning {
+        border-left-color: var(--warning-color);
+    }
+    
+    .prediction-card.success {
+        border-left-color: var(--success-color);
+    }
+    
+    .prediction-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: var(--customer-primary);
+    }
+    
+    .prediction-card.critical .prediction-icon {
+        color: var(--danger-color);
+    }
+    
+    .prediction-card.warning .prediction-icon {
+        color: var(--warning-color);
+    }
+    
+    .prediction-card.success .prediction-icon {
+        color: var(--success-color);
+    }
+    
+    .prediction-title {
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin: 0 0 0.5rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .prediction-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--customer-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .prediction-card.critical .prediction-value {
+        color: var(--danger-color);
+    }
+    
+    .prediction-card.warning .prediction-value {
+        color: var(--warning-color);
+    }
+    
+    .prediction-card.success .prediction-value {
+        color: var(--success-color);
+    }
+    
+    .prediction-confidence {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--gray-color);
+    }
+    
+    .confidence-bar {
+        width: 100%;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        background: var(--customer-primary);
+        border-radius: 3px;
+    }
+    
+    .prediction-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--customer-border);
+        border-radius: 6px;
+        background: white;
+        color: var(--customer-dark);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        background: var(--customer-primary);
+        color: white;
+        border-color: var(--customer-primary);
+    }
+    
+    .ai-charts {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-container {
+        margin: 1rem 0;
+    }
+    
+    .alerts-section {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+    
+    .alerts-section h3 {
+        margin-bottom: 1rem;
+        color: var(--customer-dark);
+    }
+    
+    .alerts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .alert-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--customer-light);
+        border-radius: 8px;
+        border-right: 3px solid var(--customer-primary);
+    }
+    
+    .alert-item.critical {
+        border-right-color: var(--danger-color);
+        background: #fee2e2;
+    }
+    
+    .alert-item.warning {
+        border-right-color: var(--warning-color);
+        background: #fef3c7;
+    }
+    
+    .alert-icon {
+        font-size: 1.5rem;
+    }
+    
+    .alert-content h4 {
+        margin: 0 0 0.25rem 0;
+        color: var(--customer-dark);
+    }
+    
+    .alert-content p {
+        margin: 0 0 0.5rem 0;
+        color: var(--customer-dark);
+        font-size: 0.9rem;
+    }
+    
+    .alert-meta {
+        font-size: 0.8rem;
+        color: var(--gray-color);
+    }
+    
+    .probability-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .probability-high { background: #ef4444; color: white; }
+    .probability-medium { background: #f59e0b; color: white; }
+    .probability-low { background: #10b981; color: white; }
+    
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray-color);
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--customer-primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="customer-container">
+    <!-- Header -->
+    <header class="customer-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="user-info">
+                    <div class="user-avatar">🤖</div>
+                    <div class="user-details">
+                        <h3 id="customer-name">نام مشتری</h3>
+                        <p>هوش مصنوعی و پیش‌بینی</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-logout" onclick="window.location.href='/customer'">بازگشت</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="customer-main">
+        <div class="container">
+            <div class="ai-container">
+                <div class="ai-header">
+                    <h2>هوش مصنوعی و پیش‌بینی</h2>
+                    <button class="btn-primary" onclick="refreshPredictions()">🔄 به‌روزرسانی پیش‌بینی‌ها</button>
+                </div>
+                
+                <!-- بارگذاری -->
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>در حال تولید پیش‌بینی‌ها...</p>
+                </div>
+                
+                <!-- پیش‌بینی‌ها -->
+                <div class="predictions-grid" id="predictions-grid">
+                    <!-- پیش‌بینی‌ها به صورت داینامیک -->
+                </div>
+                
+                <!-- نمودارهای پیش‌بینی -->
+                <div class="ai-charts">
+                    <h3>الگوهای مصرف پیش‌بینی شده</h3>
+                    <div class="chart-container">
+                        <canvas id="consumptionChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- هشدارهای پیش‌بینی شده -->
+                <div class="alerts-section">
+                    <h3>هشدارهای پیش‌بینی شده</h3>
+                    <div class="alerts-list" id="alerts-list">
+                        <!-- هشدارها به صورت داینامیک -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let consumptionChart = null;
+
+// بارگذاری پیش‌بینی‌ها
+function loadPredictions() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('predictions-grid').style.display = 'none';
+    
+    // پیش‌بینی اتمام حجم
+    fetch('/api/customer/ai/predict/data-end')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayDataEndPrediction(data.prediction);
+        }
+        return fetch('/api/customer/ai/predict/high-usage');
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayHighUsagePrediction(data.prediction);
+        }
+        return fetch('/api/customer/ai/predict/consumption');
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayConsumptionPrediction(data.prediction);
+        }
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('predictions-grid').style.display = 'grid';
+        loadAlerts();
+        loadConsumptionChart();
+    })
+    .catch(error => {
+        console.error('Error loading predictions:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('predictions-grid').innerHTML = '<div class="no-data">خطا در بارگذاری پیش‌بینی‌ها</div>';
+    });
+}
+
+// نمایش پیش‌بینی اتمام حجم
+function displayDataEndPrediction(prediction) {
+    const card = `
+        <div class="prediction-card ${prediction.days_left < 3 ? 'critical' : prediction.days_left < 7 ? 'warning' : 'success'}">
+            <div class="prediction-icon">📅</div>
+            <h3 class="prediction-title">اتمام حجم اینترنت</h3>
+            <div class="prediction-value">${prediction.days_left} روز</div>
+            <p>تاریخ پیش‌بینی شده: ${prediction.end_date}</p>
+            <div class="prediction-confidence">
+                <span>احتمال: ${(prediction.probability * 100).toFixed(0)}%</span>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: ${(prediction.probability * 100)}%"></div>
+                </div>
+            </div>
+            <div class="prediction-actions">
+                <button class="btn-action" onclick="showPlanRecommendation()">پیشنهاد پلن</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('predictions-grid').innerHTML += card;
+}
+
+// نمایش پیش‌بینی مصرف بالا
+function displayHighUsagePrediction(prediction) {
+    const card = `
+        <div class="prediction-card ${prediction.is_high ? 'warning' : 'success'}">
+            <div class="prediction-icon">📊</div>
+            <h3 class="prediction-title">مصرف بالا</h3>
+            <div class="prediction-value">${prediction.predicted_usage.toFixed(0)} MB</div>
+            <p>${prediction.is_high ? 'مصرف بالای پیش‌بینی شده' : 'مصرف در محدوده معمول'}</p>
+            <div class="prediction-confidence">
+                <span>احتمال: ${(prediction.probability * 100).toFixed(0)}%</span>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: ${(prediction.probability * 100)}%"></div>
+                </div>
+            </div>
+            <div class="prediction-actions">
+                <button class="btn-action" onclick="showUsageTips()">راهنمایی</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('predictions-grid').innerHTML += card;
+}
+
+// نمایش پیش‌بینی مصرف روزانه
+function displayConsumptionPrediction(prediction) {
+    const card = `
+        <div class="prediction-card">
+            <div class="prediction-icon">📈</div>
+            <h3 class="prediction-title">مصرف امروز</h3>
+            <div class="prediction-value">${prediction.consumption.toFixed(0)} MB</div>
+            <p>پیش‌بینی برای ساعت ${prediction.hour}</p>
+            <div class="prediction-confidence">
+                <span>دقت: ${(prediction.confidence * 100).toFixed(0)}%</span>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="width: ${(prediction.confidence * 100)}%"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('predictions-grid').innerHTML += card;
+}
+
+// بارگذاری هشدارها
+function loadAlerts() {
+    fetch('/api/customer/ai/alerts')
+    .then(response => response.json())
+    .then(alerts => {
+        const container = document.getElementById('alerts-list');
+        container.innerHTML = '';
+        
+        if (alerts.length === 0) {
+            container.innerHTML = '<div class="no-data">هشداری وجود ندارد</div>';
+            return;
+        }
+        
+        alerts.forEach(alert => {
+            let alertClass = '';
+            let probabilityClass = '';
+            let icon = 'ℹ️';
+            
+            if (alert.alert_type === 'data_end') {
+                alertClass = alert.probability > 0.8 ? 'critical' : alert.probability > 0.5 ? 'warning' : '';
+                probabilityClass = alert.probability > 0.8 ? 'probability-high' : 
+                                alert.probability > 0.5 ? 'probability-medium' : 'probability-low';
+                icon = alert.probability > 0.8 ? '🚨' : alert.probability > 0.5 ? '⚠️' : '✅';
+            } else if (alert.alert_type === 'high_usage') {
+                alertClass = alert.probability > 0.7 ? 'warning' : '';
+                probabilityClass = alert.probability > 0.7 ? 'probability-high' : 'probability-medium';
+                icon = alert.probability > 0.7 ? '⚠️' : 'ℹ️';
+            }
+            
+            const item = `
+                <div class="alert-item ${alertClass}">
+                    <div class="alert-icon">${icon}</div>
+                    <div class="alert-content">
+                        <h4>${alert.alert_type === 'data_end' ? 'اتمام حجم اینترنت' : 'مصرف بالا'}</h4>
+                        <p>${alert.alert_type === 'data_end' ? 
+                            `حجم اینترنت شما تا تاریخ ${alert.predicted_date} تمام خواهد شد` : 
+                            `مصرف بالای پیش‌بینی شده: ${alert.current_value.toFixed(0)} MB`}</p>
+                        <div class="alert-meta">
+                            <span class="probability-badge ${probabilityClass}">
+                                احتمال: ${(alert.probability * 100).toFixed(0)}%
+                            </span>
+                            ${alert.created_at}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += item;
+        });
+    })
+    .catch(error => {
+        console.error('Error loading alerts:', error);
+    });
+}
+
+// بارگذاری نمودار مصرف
+function loadConsumptionChart() {
+    // داده‌های نمونه برای نمودار
+    const hours = [];
+    const consumption = [];
+    
+    for (let i = 0; i < 24; i++) {
+        hours.push(`${i}:00`);
+        // داده‌های پیش‌بینی شده
+        consumption.push(Math.random() * 200 + 50);
+    }
+    
+    const ctx = document.getElementById('consumptionChart').getContext('2d');
+    
+    if (consumptionChart) {
+        consumptionChart.destroy();
+    }
+    
+    consumptionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: 'مصرف پیش‌بینی شده (MB)',
+                data: consumption,
+                borderColor: '#7c3aed',
+                backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// به‌روزرسانی پیش‌بینی‌ها
+function refreshPredictions() {
+    document.getElementById('predictions-grid').innerHTML = '';
+    loadPredictions();
+}
+
+// نمایش پیشنهاد پلن
+function showPlanRecommendation() {
+    alert('پیشنهاد پلن: برای جلوگیری از قطعی اینترنت، پلن ۱۰ گیگابایتی را در نظر بگیرید.');
+}
+
+// نمایش راهنمایی مصرف
+function showUsageTips() {
+    alert('راهنمایی مصرف:\n- از اپلیکیشن‌های سنگین در ساعات پیک استفاده نکنید\n- وای‌فای را در مواقع لزوم خاموش کنید\n- از کیفیت ویدئو مناسب استفاده کنید');
+}
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('customer-name').textContent = 'نام مشتری'; // باید از session بگیرید
+    loadPredictions();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .loyalty-container {
+        padding: 2rem;
+    }
+    
+    .loyalty-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .tab {
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .tab.active {
+        border-bottom-color: var(--admin-primary);
+        color: var(--admin-primary);
+        font-weight: 500;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .loyalty-form {
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .loyalty-programs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .program-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border: 2px solid var(--admin-border);
+    }
+    
+    .program-card.active {
+        border-color: var(--admin-primary);
+    }
+    
+    .program-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .program-card p {
+        margin: 0 0 1rem 0;
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+    
+    .program-stats {
+        display: flex;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .stat-badge {
+        background: var(--admin-light);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    
+    .rewards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .reward-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        border-left: 4px solid var(--admin-primary);
+    }
+    
+    .reward-card h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--admin-dark);
+    }
+    
+    .reward-points {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .loyalty-customers-table {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+    }
+    
+    .loyalty-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .loyalty-table th,
+    .loyalty-table td {
+        padding: 1rem;
+        text-align: right;
+        border-bottom: 1px solid var(--admin-border);
+    }
+    
+    .loyalty-table th {
+        background: var(--admin-primary);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .level-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .level-gold { background: #fbbf24; color: #92400e; }
+    .level-silver { background: #94a3b8; color: #1e293b; }
+    .level-bronze { background: #cd7f32; color: white; }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .loyalty-stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    
+    .stat-card .number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--admin-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .stat-card .label {
+        color: var(--gray-color);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <h3>پنل ادمین</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="/admin">داشبورد</a></li>
+                <li><a href="/admin/accounts">مدیریت اکانت‌ها</a></li>
+                <li><a href="/admin/sellers">فروشندگان</a></li>
+                <li><a href="/admin/notifications">اطلاع‌رسانی</a></li>
+                <li><a href="/admin/reports">گزارش‌ها</a></li>
+                <li><a href="/admin/loyalty" class="active">وفاداری</a></li>
+                <li><a href="/">خروج</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <div class="loyalty-container">
+            <div class="section-header">
+                <h2>مدیریت سیستم وفاداری</h2>
+            </div>
+            
+            <!-- تب‌ها -->
+            <div class="loyalty-tabs">
+                <div class="tab active" onclick="switchTab('overview')">بررسی کلی</div>
+                <div class="tab" onclick="switchTab('programs')">برنامه‌ها</div>
+                <div class="tab" onclick="switchTab('rewards')">جوایز</div>
+                <div class="tab" onclick="switchTab('customers')">مشتریان</div>
+            </div>
+            
+            <!-- بررسی کلی -->
+            <div class="tab-content active" id="overview-tab">
+                <div class="loyalty-stats-cards">
+                    <div class="stat-card">
+                        <div class="label">مجموع امتیازات</div>
+                        <div class="number" id="total-points">0</div>
+                        <div class="label">امتیاز</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">مشتریان فعال</div>
+                        <div class="number" id="active-customers">0</div>
+                        <div class="label">نفر</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">جوایز استفاده شده</div>
+                        <div class="number" id="redeemed-rewards">0</div>
+                        <div class="label">عدد</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="label">میانگین امتیاز</div>
+                        <div class="number" id="avg-points">0</div>
+                        <div class="label">امتیاز به ازای هر مشتری</div>
+                    </div>
+                </div>
+                
+                <div class="loyalty-programs-grid" id="programs-overview">
+                    <!-- برنامه‌ها به صورت داینامیک -->
+                </div>
+            </div>
+            
+            <!-- برنامه‌ها -->
+            <div class="tab-content" id="programs-tab">
+                <div class="loyalty-form">
+                    <h3>ایجاد برنامه وفاداری جدید</h3>
+                    <form id="program-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="program-name">نام برنامه:</label>
+                                <input type="text" id="program-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="program-description">توضیحات:</label>
+                                <textarea id="program-description" rows="2"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="points-per-purchase">امتیاز به ازای هر خرید (هر ۱۰۰۰ افغانی):</label>
+                                <input type="number" id="points-per-purchase" value="1" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="points-per-gb">امتیاز به ازای هر گیگابایت مصرف:</label>
+                                <input type="number" id="points-per-gb" value="10" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="min-purchase">حداقل مبلغ خرید برای دریافت امتیاز (افغانی):</label>
+                                <input type="number" id="min-purchase" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="program-active">وضعیت:</label>
+                                <select id="program-active">
+                                    <option value="true">فعال</option>
+                                    <option value="false">غیرفعال</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">ایجاد برنامه</button>
+                    </form>
+                </div>
+                
+                <div class="loyalty-programs-grid" id="programs-list">
+                    <!-- لیست برنامه‌ها به صورت داینامیک -->
+                </div>
+            </div>
+            
+            <!-- جوایز -->
+            <div class="tab-content" id="rewards-tab">
+                <div class="loyalty-form">
+                    <h3>ایجاد جایزه جدید</h3>
+                    <form id="reward-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reward-program">برنامه وفاداری:</label>
+                                <select id="reward-program" required>
+                                    <option value="">انتخاب کنید...</option>
+                                    <!-- گزینه‌ها به صورت داینامیک -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="reward-name">نام جایزه:</label>
+                                <input type="text" id="reward-name" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reward-description">توضیحات:</label>
+                            <textarea id="reward-description" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="points-required">امتیاز مورد نیاز:</label>
+                                <input type="number" id="points-required" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="discount-percentage">درصد تخفیف (%):</label>
+                                <input type="number" id="discount-percentage" value="0" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="free-data">گیگابایت رایگان:</label>
+                                <input type="number" id="free-data" value="0" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="reward-active">وضعیت:</label>
+                            <select id="reward-active">
+                                <option value="true">فعال</option>
+                                <option value="false">غیرفعال</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">ایجاد جایزه</button>
+                    </form>
+                </div>
+                
+                <div class="rewards-grid" id="rewards-list">
+                    <!-- لیست جوایز به صورت داینامیک -->
+                </div>
+            </div>
+            
+            <!-- مشتریان -->
+            <div class="tab-content" id="customers-tab">
+                <div class="loyalty-customers-table">
+                    <table class="loyalty-table">
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>نام مشتری</th>
+                                <th>مجموع امتیازات</th>
+                                <th>امتیاز قابل استفاده</th>
+                                <th>تعداد خرید</th>
+                                <th>مجموع خرید</th>
+                                <th>سطح</th>
+                                <th>آخرین فعالیت</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-table-body">
+                            <!-- داده‌ها به صورت داینامیک -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+{% endblock %}

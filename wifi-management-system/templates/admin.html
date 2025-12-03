@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت وای‌فای</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@latest/font.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css">
+    <style>
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --admin-primary: #3b82f6;
+            --admin-secondary: #1d4ed8;
+            --admin-dark: #1f2937;
+            --admin-light: #f3f4f6;
+            --admin-border: #e5e7eb;
+            --admin-success: #10b981;
+            --admin-warning: #f59e0b;
+            --admin-danger: #ef4444;
+            --admin-info: #3b82f6;
+            --admin-gray: #6b7280;
+            --admin-light-gray: #9ca3af;
+            
+            --border-radius: 8px;
+            --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --box-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            
+            --sidebar-width: 250px;
+            --header-height: 60px;
+        }
+        
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f8fafc;
+            color: var(--admin-dark);
+            line-height: 1.6;
+        }
+        
+        /* Layout */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--admin-dark), #1a1a2e);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .sidebar-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 1rem 0;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-right: 3px solid transparent;
+        }
+        
+        .sidebar-nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-right-color: var(--admin-primary);
+        }
+        
+        .sidebar-nav a.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: white;
+            border-right-color: var(--admin-primary);
+        }
+        
+        .sidebar-nav i {
+            margin-left: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        /* Main Content */
+        .admin-main {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--admin-border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-lg);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .icon-users { background: #dbeafe; color: #1d4ed8; }
+        .icon-sellers { background: #fef3c7; color: #92400e; }
+        .icon-sales { background: #dcfce7; color: #166534; }
+        .icon-revenue { background: #fce7f3; color: #9d174d; }
+        .icon-active { background: #e0e7ff; color: #3730a3; }
+        .icon-tickets { background: #fef3c7; color: #92400e; }
+        
+        .stat-content h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--admin-dark);
+            margin: 0.5rem 0;
+        }
+        
+        .stat-content p {
+            color: var(--admin-gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .admin-table th {
+            background: var(--admin-light);
+            color: var(--admin-dark);
+            font-weight: 600;
+            text-align: right;
+            padding: 1rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--admin-border);
+            color: var(--admin-dark);
+        }
+        
+        .admin-table tr:hover {
+            background: var(--admin-light);
+        }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 0.5rem;
+        }
+        
+        .btn i {
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: var(--admin-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--admin-secondary);
+        }
+        
+        .btn-secondary {
+            background: var(--admin-light);
+            color: var(--admin-dark);
+            border: 1px solid var(--admin-border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--admin-border);
+        }
+        
+        .btn-success {
+            background: var(--admin-success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--admin-warning);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--admin-danger);
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--admin-border);
+            color: var(--admin-dark);
+        }
+        
+        .btn-outline:hover {
+            background: var(--admin-light);
+        }
+        
+        /* Status Badges */
+        .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status.active {
+            background: var(--admin-success);
+            color: white;
+        }
+        
+        .status.inactive {
+            background: var(--admin-danger);
+            color: white;
+        }
+        
+        .status.pending {
+            background: var(--admin-warning);
+            color: white;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--admin-dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--admin-border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--admin-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--admin-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--admin-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--admin-gray);
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1.5rem 0;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--admin-border);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--admin-primary);
+            color: var(--admin-primary);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+        
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--admin-gray);
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--admin-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* No Data */
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: var(--admin-light-gray);
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 70px;
+            }
+            
+            .admin-sidebar .sidebar-nav span {
+                display: none;
+            }
+            
+            .admin-sidebar .sidebar-header h3 {
+                font-size: 1rem;
+            }
+            
+            .admin-main {
+                margin-right: 70px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .admin-main {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* File Upload */
+        .upload-area {
+            border: 2px dashed var(--admin-border);
+            border-radius: var(--border-radius);
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--admin-primary);
+            background: var(--admin-light);
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--admin-gray);
+            margin-bottom: 1rem;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--admin-light);
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+        }
+        
+        /* Account Cards */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .account-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border: 1px solid var(--admin-border);
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow-lg);
+        }
+        
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        
+        .account-username {
+            font-weight: 600;
+            color: var(--admin-dark);
+        }
+        
+        .account-type {
+            padding: 0.25rem 0.75rem;
+            background: var(--admin-light);
+            color: var(--admin-dark);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .account-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .account-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .detail-label {
+            color: var(--admin-gray);
+            font-size: 0.85rem;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+            color: var(--admin-dark);
+        }
+        
+        .account-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        /* Utility Classes */
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        .mb-4 { margin-bottom: 2rem; }
+        
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
+        .mt-4 { margin-top: 2rem; }
+        
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        
+        .d-flex { display: flex; }
+        .d-grid { display: grid; }
+        .d-none { display: none; }
+        .d-block { display: block; }
+        
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .align-center { align-items: center; }
+        
+        .w-100 { width: 100%; }
+        .h-100 { height: 100%; }
+        
+        .gap-1 { gap: 0.5rem; }
+        .gap-2 { gap: 1rem; }
+        .gap-3 { gap: 1.5rem; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--admin-light);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--admin-gray);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--admin-dark);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <h3><i class="bi bi-wifi"></i> مدیریت وای‌فای</h3>
+                <small style="color: #9ca3af;">پنل ادمین</small>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#dashboard" onclick="showSection('dashboard')" class="active"><i class="bi bi-speedometer2"></i> <span>داشبورد</span></a></li>
+                    <li><a href="#accounts" onclick="showSection('accounts')"><i class="bi bi-person-badge"></i> <span>مدیریت اکانت‌ها</span></a></li>
+                    <li><a href="#sellers" onclick="showSection('sellers')"><i class="bi bi-shop"></i> <span>فروشندگان</span></a></li>
+                    <li><a href="#notifications" onclick="showSection('notifications')"><i class="bi bi-bell"></i> <span>اطلاع‌رسانی</span></a></li>
+                    <li><a href="#reports" onclick="showSection('reports')"><i class="bi bi-file-text"></i> <span>گزارش‌ها</span></a></li>
+                    <li><a href="#loyalty" onclick="showSection('loyalty')"><i class="bi bi-award"></i> <span>وفاداری</span></a></li>
+                    <li><a href="#payments" onclick="showSection('payments')"><i class="bi bi-credit-card"></i> <span>پرداخت‌ها</span></a></li>
+                    <li><a href="#ai" onclick="showSection('ai')"><i class="bi bi-robot"></i> <span>هوش مصنوعی</span></a></li>
+                    <li><a href="#support" onclick="showSection('support')"><i class="bi bi-headset"></i> <span>پشتیبانی</span></a></li>
+                    <li><a href="/" id="logout-btn"><i class="bi bi-box-arrow-left"></i> <span>خروج</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="admin-section active">
+                <div class="section-header">
+                    <h2><i class="bi bi-speedometer2"></i> داشبورد</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="refreshDashboard()">
+                            <i class="bi bi-arrow-clockwise"></i> بروزرسانی
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-users">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-accounts">0</h3>
+                            <p>مجموع اکانت‌ها</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-sellers">
+                                <i class="bi bi-shop"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-sellers">0</h3>
+                            <p>فروشندگان فعال</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-sales">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-sales">0</h3>
+                            <p>فروش امروز</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-revenue">
+                                <i class="bi bi-cash-stack"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="revenue">0</h3>
+                            <p>درآمد ماه</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-active">
+                                <i class="bi bi-wifi"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="active-users">0</h3>
+                            <p>کاربران آنلاین</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-tickets">
+                                <i class="bi bi-ticket"></i>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="pending-tickets">0</h3>
+                            <p>تیکت‌های باز</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="card">
+                        <h3 class="mb-3">📊 نمودار فروش ماهانه</h3>
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="card">
+                        <h3 class="mb-3">📈 فعالیت‌های اخیر</h3>
+                        <div class="table-container">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ردیف</th>
+                                        <th>کاربر</th>
+                                        <th>فعالیت</th>
+                                        <th>تاریخ</th>
+                                        <th>وضعیت</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-activities">
+                                    <tr>
+                                        <td colspan="5" class="loading">در حال بارگذاری...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accounts Management Section -->
+            <section id="accounts" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-person-badge"></i> مدیریت اکانت‌ها</h2>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="showUploadModal()">
+                            <i class="bi bi-upload"></i> آپلود فایل
+                        </button>
+                        <button class="btn btn-success" id="saveAllBtn" style="display: none;" onclick="saveAllAccounts()">
+                            <i class="bi bi-save"></i> ذخیره همه
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Upload Area -->
+                <div class="card mb-3">
+                    <h3 class="mb-3">📁 آپلود فایل متنی</h3>
+                    <div class="upload-area" onclick="document.getElementById('textFile').click()">
+                        <i class="bi bi-cloud-upload"></i>
+                        <h4>فایل را اینجا رها کنید</h4>
+                        <p class="text-muted">یا کلیک کنید تا فایل انتخاب شود</p>
+                        <p class="text-sm">پشتیبانی از فرمت‌های: .txt, .csv</p>
+                    </div>
+                    
+                    <input type="file" id="textFile" accept=".txt,.csv" style="display: none;" onchange="parseTextFile()">
+                    
+                    <div id="fileInfo" class="file-info mb-3" style="display: none;"></div>
+                    
+                    <div id="uploadResults" class="mb-3">
+                        <!-- نتایج آپلود -->
+                    </div>
+                    
+                    <div class="d-flex justify-between align-center">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-secondary" onclick="exportAccounts('json')">
+                                <i class="bi bi-download"></i> JSON
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportAccounts('csv')">
+                                <i class="bi bi-download"></i> CSV
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportAccounts('txt')">
+                                <i class="bi bi-download"></i> TXT
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" id="accountSearch" placeholder="جستجوی اکانت..." style="width: 250px;">
+                            <select class="form-control" id="typeFilter" style="width: 150px;">
+                                <option value="">همه نوع‌ها</option>
+                                <option value="3GB">3GB</option>
+                                <option value="5GB">5GB</option>
+                                <option value="10GB">10GB</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Extracted Accounts -->
+                <div class="card">
+                    <h3 class="mb-3">🔍 اکانت‌های استخراج شده</h3>
+                    <div id="extractedAccounts" class="accounts-grid">
+                        <div class="no-data">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <h4>هیچ اکانتی استخراج نشده</h4>
+                            <p>یک فایل متنی آپلود کنید تا اکانت‌ها استخراج شوند</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Saved Accounts -->
+                <div class="card mt-4">
+                    <h3 class="mb-3">💾 اکانت‌های ذخیره شده</h3>
+                    <div id="savedAccountsList" class="accounts-grid">
+                        <!-- اکانت‌های ذخیره شده -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sellers Section -->
+            <section id="sellers" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-shop"></i> مدیریت فروشندگان</h2>
+                    <button class="btn btn-primary" onclick="showAddSellerModal()">
+                        <i class="bi bi-plus-circle"></i> افزودن فروشنده
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>نام فروشنده</th>
+                                <th>تلفن</th>
+                                <th>ایمیل</th>
+                                <th>کمیسیون</th>
+                                <th>تاریخ عضویت</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellers-table-body">
+                            <tr>
+                                <td colspan="8" class="loading">در حال بارگذاری...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Notifications Section -->
+            <section id="notifications" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-bell"></i> اطلاع‌رسانی</h2>
+                    <button class="btn btn-primary" onclick="showNewNotificationModal()">
+                        <i class="bi bi-plus-circle"></i> ارسال اعلان جدید
+                    </button>
+                </div>
+                
+                <div class="card mb-4">
+                    <h3 class="mb-3">📢 ارسال اعلان جدید</h3>
+                    <form id="notificationForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="notification-title">عنوان:</label>
+                                <input type="text" id="notification-title" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="notification-type">نوع اعلان:</label>
+                                <select id="notification-type" class="form-control">
+                                    <option value="info">اطلاعاتی</option>
+                                    <option value="warning">هشدار</option>
+                                    <option value="urgent">اهمیت بالا</option>
+                                    <option value="success">موفقیت</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notification-message">متن اعلان:</label>
+                            <textarea id="notification-message" class="form-control" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="target-type">مخاطب:</label>
+                                <select id="target-type" class="form-control">
+                                    <option value="all">همه کاربران</option>
+                                    <option value="sellers">فروشندگان</option>
+                                    <option value="customers">مشتریان</option>
+                                    <option value="specific">کاربر خاص</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="expires-at">تاریخ انقضا:</label>
+                                <input type="date" id="expires-at" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">ارسال اعلان</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">📋 اعلان‌های اخیر</h3>
+                    <div id="notifications-container">
+                        <!-- اعلان‌ها -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-file-text"></i> گزارش‌گیری</h2>
+                </div>
+                
+                <div class="report-types-grid mb-4">
+                    <div class="report-type-card" onclick="generateReport('sales')">
+                        <i class="bi bi-graph-up" style="font-size: 2rem;"></i>
+                        <h4>گزارش فروش</h4>
+                        <p>گزارش جامع فروش بر اساس زمان</p>
+                    </div>
+                    
+                    <div class="report-type-card" onclick="generateReport('accounts')">
+                        <i class="bi bi-people" style="font-size: 2rem;"></i>
+                        <h4>گزارش اکانت‌ها</h4>
+                        <p>گزارش استفاده از اکانت‌ها</p>
+                    </div>
+                    
+                    <div class="report-type-card" onclick="generateReport('sellers')">
+                        <i class="bi bi-shop" style="font-size: 2rem;"></i>
+                        <h4>گزارش فروشندگان</h4>
+                        <p>عملکرد فروشندگان</p>
+                    </div>
+                    
+                    <div class="report-type-card" onclick="generateReport('financial')">
+                        <i class="bi bi-cash-coin" style="font-size: 2rem;"></i>
+                        <h4>گزارش مالی</h4>
+                        <p>گزارش درآمد و هزینه‌ها</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">📊 گزارش‌های تولید شده</h3>
+                    <div id="reports-list">
+                        <!-- لیست گزارش‌ها -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loyalty Section -->
+            <section id="loyalty" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-award"></i> سیستم وفاداری</h2>
+                </div>
+                
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <h3 id="total-points">0</h3>
+                        <p>مجموع امتیازات</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="active-customers">0</h3>
+                        <p>مشتریان فعال</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="redeemed-rewards">0</h3>
+                        <p>جوایز استفاده شده</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="avg-points">0</h3>
+                        <p>میانگین امتیاز</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">🏆 جوایز وفاداری</h3>
+                    <div id="loyalty-programs">
+                        <!-- لیست جوایز -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payments Section -->
+            <section id="payments" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-credit-card"></i> مدیریت پرداخت‌ها</h2>
+                </div>
+                
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <h3 id="total-payments">0</h3>
+                        <p>مجموع پرداخت‌ها</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="successful-payments">0</h3>
+                        <p>پرداخت‌های موفق</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="total-revenue">0</h3>
+                        <p>درآمد کل</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="today-payments">0</h3>
+                        <p>پرداخت‌های امروز</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">💳 آخرین پرداخت‌ها</h3>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ردیف</th>
+                                    <th>کاربر</th>
+                                    <th>مبلغ</th>
+                                    <th>نوع</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-table">
+                                <tr>
+                                    <td colspan="7" class="loading">در حال بارگذاری...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Section -->
+            <section id="ai" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-robot"></i> هوش مصنوعی</h2>
+                </div>
+                
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <h3 id="total-models">0</h3>
+                        <p>تعداد مدل‌ها</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="active-models">0</h3>
+                        <p>مدل‌های فعال</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="total-predictions">0</h3>
+                        <p>پیش‌بینی‌ها</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="avg-accuracy">0%</h3>
+                        <p>دقت میانگین</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">🤖 مدل‌های یادگیری ماشین</h3>
+                    <div id="ai-models">
+                        <!-- لیست مدل‌ها -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Support Section -->
+            <section id="support" class="admin-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="bi bi-headset"></i> پشتیبانی</h2>
+                </div>
+                
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <h3 id="support-total-tickets">0</h3>
+                        <p>کل تیکت‌ها</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="support-open-tickets">0</h3>
+                        <p>تیکت‌های باز</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="support-in-progress">0</h3>
+                        <p>در حال پیگیری</p>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <h3 id="support-resolved">0</h3>
+                        <p>حل شده</p>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 class="mb-3">🎫 تیکت‌های پشتیبانی</h3>
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ردیف</th>
+                                    <th>کاربر</th>
+                                    <th>موضوع</th>
+                                    <th>اولویت</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="support-tickets">
+                                <tr>
+                                    <td colspan="7" class="loading">در حال بارگذاری...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-upload"></i> آپلود فایل PDF</h3>
+                <button class="close" onclick="closeModal('uploadModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="pdf_file">انتخاب فایل PDF:</label>
+                        <input type="file" id="pdf_file" class="form-control" accept=".pdf" required>
+                    </div>
+                    <div id="uploadResult"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('uploadModal')">لغو</button>
+                <button type="submit" form="uploadForm" class="btn btn-primary">آپلود</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Seller Modal -->
+    <div id="addSellerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-plus-circle"></i> افزودن فروشنده جدید</h3>
+                <button class="close" onclick="closeModal('addSellerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addSellerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="seller-name">نام فروشنده:</label>
+                            <input type="text" id="seller-name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="seller-phone">شماره تلفن:</label>
+                            <input type="tel" id="seller-phone" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="seller-email">ایمیل:</label>
+                            <input type="email" id="seller-email" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="seller-password">رمز عبور:</label>
+                            <input type="password" id="seller-password" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="seller-commission">درصد کمیسیون:</label>
+                        <input type="number" id="seller-commission" class="form-control" value="10" min="0" max="100">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addSellerModal')">لغو</button>
+                <button type="submit" form="addSellerForm" class="btn btn-primary">افزودن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="bi bi-bell"></i> ارسال اعلان جدید</h3>
+                <button class="close" onclick="closeModal('notificationModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newNotificationForm">
+                    <!-- محتوای فرم اعلان -->
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="admin.js"></script>
+    <script src="admin-accounts.js"></script>
+    
+    <script>
+        // Initialize components
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active section based on hash
+            if (window.location.hash) {
+                showSection(window.location.hash.substring(1));
+            }
+            
+            // Load recent activities
+            loadRecentActivities();
+            
+            // Setup event listeners
+            document.getElementById('logout-btn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('آیا می‌خواهید از سیستم خارج شوید؟')) {
+                    window.location.href = 'login.html';
+                }
+            });
+            
+            // Notification form submission
+            document.getElementById('notificationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendNotification();
+            });
+            
+            // Chart initialization
+            initDashboardChart();
+        });
+        
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.admin-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show target section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // Update URL hash
+            window.location.hash = sectionId;
+            
+            // Update active nav link
+            document.querySelectorAll('.sidebar-nav a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${sectionId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // Modal functions
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+        
+        function showAddSellerModal() {
+            document.getElementById('addSellerModal').classList.add('active');
+        }
+        
+        function showNewNotificationModal() {
+            document.getElementById('notificationModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Dashboard functions
+        function refreshDashboard() {
+            // Add refresh logic here
+            console.log('Refreshing dashboard...');
+        }
+        
+        function loadRecentActivities() {
+            const activities = [
+                { user: 'کاربر ۱', action: 'اکانت جدید خریداری کرد', date: '1402/12/15', status: 'موفق' },
+                { user: 'فروشنده ۱', action: 'اکانت جدید افزود', date: '1402/12/15', status: 'موفق' },
+                { user: 'کاربر ۲', action: 'درخواست پشتیبانی', date: '1402/12/14', status: 'در انتظار' },
+                { user: 'سیستم', action: 'بروزرسانی انجام شد', date: '1402/12/14', status: 'تکمیل' }
+            ];
+            
+            const tbody = document.getElementById('recent-activities');
+            tbody.innerHTML = '';
+            
+            activities.forEach((activity, index) => {
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${activity.user}</td>
+                        <td>${activity.action}</td>
+                        <td>${activity.date}</td>
+                        <td><span class="status ${activity.status === 'موفق' ? 'active' : 'pending'}">${activity.status}</span></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+        
+        function initDashboardChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور'],
+                    datasets: [{
+                        label: 'فروش ماهانه (میلیون افغانی)',
+                        data: [12, 19, 8, 15, 22, 18],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    family: 'Vazirmatn'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function sendNotification() {
+            const title = document.getElementById('notification-title').value;
+            const message = document.getElementById('notification-message').value;
+            const type = document.getElementById('notification-type').value;
+            const target = document.getElementById('target-type').value;
+            
+            // Add API call here
+            console.log('Sending notification:', { title, message, type, target });
+            
+            // Show success message
+            alert('اعلان با موفقیت ارسال شد!');
+            document.getElementById('notificationForm').reset();
+        }
+        
+        function generateReport(type) {
+            // Add report generation logic here
+            console.log('Generating report:', type);
+            alert(`گزارش ${type} در حال تولید است...`);
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

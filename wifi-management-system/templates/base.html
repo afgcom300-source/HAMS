@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}سیستم مدیریت وای‌فای{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/seller.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/customer.css') }}">
+</head>
+<body>
+    {% if session.username %}
+        {% include "components/header.html" %}
+    {% endif %}
+
+    <main class="{% if session.username %}main-authenticated{% else %}main-public{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "components/footer.html" %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

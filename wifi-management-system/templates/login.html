@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به سیستم</title>
+    <link rel="stylesheet"  href="{{ url_for('static', filename='css/login.css') }}">
+">
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <h2>ورود به حساب کاربری</h2>
+       <!-- نمایش پیام های flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form id="loginForm" method="POST" action="{{url_for('login')}}">
+
+                <div class="form-group" id="usernameGroup">
+                    <label for="username">نام کاربری</label>
+                    <input type="text" id="username" name="username" placeholder="نام کاربری خود را وارد کنید">
+                </div>
+
+                <div class="form-group d-none" id="phoneGroup">
+                    <label for="phone">شماره تماس</label>
+                    <input type="text" id="phone" name="phone" placeholder="شماره تماس فروشنده">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" placeholder="رمز عبور خود را وارد کنید">
+                </div>
+
+                <div class="form-group">
+                    <label for="userType">نقش کاربری</label>
+                    <select id="userType" name="userType">
+                        <option value="">انتخاب نقش</option>
+                        <option value="admin">مدیر</option>
+                        <option value="seller">فروشنده</option>
+                        <option value="customer">مشتری</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="login-btn">ورود</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const userType = document.getElementById("userType");
+        const usernameGroup = document.getElementById("usernameGroup");
+        const phoneGroup = document.getElementById("phoneGroup");
+
+        userType.addEventListener("change", function() {
+            if (this.value === "seller") {
+                // برای فروشنده
+                usernameGroup.classList.add("d-none");
+                phoneGroup.classList.remove("d-none");
+            } else {
+                // برای admin و customer
+                phoneGroup.classList.add("d-none");
+                usernameGroup.classList.remove("d-none");
+            }
+        });
+    </script>
+
+    <style>
+        .d-none {
+            display: none !important;
+        
+        }
+        .alart{
+            background-attachment: fixed;
+            border-radius: 30px;
+        }
+        
+    </style>
+
+
+</body>
+</html> 
